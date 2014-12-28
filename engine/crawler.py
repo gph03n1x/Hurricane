@@ -80,7 +80,7 @@ class Crawler(object):
         self.processes = {}
         for process in range(0, max_processes):
             self.processes[process] = Worker(self.queue)
-            multiprocessing.freeze_support()
+            #multiprocessing.freeze_support()
             self.processes[process].start()
     def add_website(self, website_url):
         self.queue.put((website_url, 0))
@@ -100,9 +100,10 @@ class Worker(multiprocessing.Process):
     def run(self):
         while True:
             try:
-                item = self.queue.get()
-            except:
-                pass
+                if not self.queue.empty():
+                    item = self.queue.get()
+            except Exception:
+                logging.exception('Worker-Exception-run()')
             else:
                 self.work(item)
                 self.queue.task_done()
@@ -136,7 +137,7 @@ class Worker(multiprocessing.Process):
                     recorder_db(data, queue_item[0])
                 logging.info("ok - 5")
         except Exception:
-            logging.exception('Worker-Exception')
+            logging.exception('Worker-Exception-work()')
 
 if __name__ == '__main__':
     crawl = Crawler(2)
