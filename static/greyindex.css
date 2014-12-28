@@ -1,0 +1,16 @@
+body {
+    font-family: "Lato","proxima-nova","Helvetica Neue",Arial,sans-serif;
+    font-weight: normal;
+    color: #856D6D;
+    background-color: #59C2AB;
+}
+.blgrblack {background-color: #856D6D;}
+.blgrblue {background-color: #59C2AB;}
+
+.cblack {color: #856D6D;}
+.cred {color: #FF7A7A;}
+.cblue {color: #59C2AB;}
+.corange {color: #FCB644;}
+.cyellow {color: #DBFF4A;}
+
+.nbr {border-radius: 0px;}
