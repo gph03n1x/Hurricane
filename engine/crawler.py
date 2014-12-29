@@ -17,16 +17,9 @@ from HTMLParser import HTMLParser
 #from core.filters import *
 #from core.utils import *
 global SCANNED_ROBOTS
-global SCANNED_HOSTS
-global PROCESSES
-
+#global CLIENT
 
 SCANNED_ROBOTS = {}
-SCANNED_HOSTS = []
-PROCESSES = []
-
-client = MongoClient(MY_HOST, 27017)
-db = client[MY_DB]
 
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
@@ -42,26 +35,34 @@ class MyHTMLParser(HTMLParser):
 
 
 class pymongo_recorder(object):
-    def __init__(self, cursor_object):
-        self.cursor_object = cursor_object
-        self.posts = self.cursor_object.lists
-        self.urls = self.cursor_object.urls
+    def __init__(self, CLIENT):
+        #CLIENT = MongoClient(MY_HOST, 27017)
+        #self.cursor_object = CLIENT['test']['lists']
+        logging.debug('rec - init')
+        self.posts = CLIENT['test']['lists']
+        self.urls = CLIENT['test']['urls']
+        logging.debug('rec - ok - complete')
     def record_url(self, url):
+        logging.debug('rec - 1')
         if self.urls.find({"urls": str(url)}).count() == 0:
             self.urls.insert({"urls": str(url)})
+            logging.debug('rec - 2')
             return True
         return False
 
 
     def recorder_db(self, data, urls):
         # Database Update
+        logging.debug('rec - 3')
         post = {"data": data, "urls": urls}
         if self.posts.find({"data": str(data)}).count() == 0:
+            logging.debug('rec - 4')
             try:
                 self.posts.insert(post)
             except Exception:
                 logging.exception('Recorder-mongo-db')
         else:
+            logging.debug('rec - 5')
             try:
                 post_list = self.posts.find({"data": str(data)})
                 post_list["data"] = post_list["data"] + post["data"]
@@ -73,20 +74,17 @@ class pymongo_recorder(object):
 
 
 
+
 class Crawler(object):
     def __init__(self, max_processes):
-        self.manager = multiprocessing.Manager()
-        self.queue = self.manager.Queue()
+        self.queue = multiprocessing.Queue()
         self.processes = {}
         for process in range(0, max_processes):
+            print process
             self.processes[process] = Worker(self.queue)
-            #multiprocessing.freeze_support()
             self.processes[process].start()
     def add_website(self, website_url):
         self.queue.put((website_url, 0))
-    def connect_processes(self, db):
-        for process in self.processes:
-            self.processes[process].connect_with_pymongo(db)
 
 
 class Worker(multiprocessing.Process):
@@ -95,23 +93,25 @@ class Worker(multiprocessing.Process):
         self.queue = queue
         self.parser = MyHTMLParser()
         self.queue_item = None
-    def connect_with_pymongo(self, db):
-        self.pymongo = pymongo_recorder(db)
+        logging.info("init - ok")
+        self.pymongo_oop = pymongo_recorder(MongoClient(MY_HOST, 27017))
+        logging.info("init - ok - complete")
     def run(self):
         while True:
             try:
+                logging.info("init - run - 1")
                 if not self.queue.empty():
                     item = self.queue.get()
+                    self.work(item)
+                logging.info("init - run - 2")
             except Exception:
                 logging.exception('Worker-Exception-run()')
-            else:
-                self.work(item)
-                self.queue.task_done()
+                logging.info(str(self.queue.empty()))
     def work(self, queue_item):
         logging.info(str(queue_item))
         try:
             logging.info("ok - 0")
-            if self.pymongo.record_url(queue_item[0]):
+            if self.pymongo_oop.record_url(queue_item[0]):
                 logging.info("ok - 1")
                 self.parser.reset_list()
                 self.req = urllib2.Request(queue_item[0])
@@ -134,12 +134,11 @@ class Worker(multiprocessing.Process):
                     if queue_item[1] + 1 <= 2:
                         self.queue.put((url, queue_item[1] + 1))
                 for data in self.data:
-                    recorder_db(data, queue_item[0])
+                    self.pymongo_oop.recorder_db(data, queue_item[0])
                 logging.info("ok - 5")
         except Exception:
             logging.exception('Worker-Exception-work()')
 
 if __name__ == '__main__':
-    crawl = Crawler(2)
-    crawl.connect_processes(db)
+    crawl = Crawler(1)
     crawl.add_website("http://koslib.com/")
