@@ -11,7 +11,6 @@ import urllib2
 import Queue
 import multiprocessing
 import logging
-from pymongo import MongoClient
 from pprint import pprint
 from HTMLParser import HTMLParser
 #from core.filters import *
@@ -34,16 +33,12 @@ class MyHTMLParser(HTMLParser):
         self.data_list.append(data)
 
 
-class pymongo_recorder(object):
-    def __init__(self, CLIENT):
-        #CLIENT = MongoClient(MY_HOST, 27017)
-        #self.cursor_object = CLIENT['test']['lists']
-        logging.debug('rec - init')
-        self.posts = CLIENT['test']['lists']
-        self.urls = CLIENT['test']['urls']
-        logging.debug('rec - ok - complete')
+class file_storage(object):
+    def __init__(self):
+
     def record_url(self, url):
         logging.debug('rec - 1')
+        logging.debug(str(self.urls.find({"urls": str(url)}).count()))
         if self.urls.find({"urls": str(url)}).count() == 0:
             self.urls.insert({"urls": str(url)})
             logging.debug('rec - 2')
@@ -65,7 +60,7 @@ class pymongo_recorder(object):
             logging.debug('rec - 5')
             try:
                 post_list = self.posts.find({"data": str(data)})
-                post_list["data"] = post_list["data"] + post["data"]
+                post_list["data"] = post_list["data"] + ","+ post["data"]
                 post_id = post_list["_id"]
                 self.posts.update({"_id": post_id}, {"$set": post_list})
             except Exception:
@@ -79,13 +74,14 @@ class Crawler(object):
     def __init__(self, max_processes):
         self.queue = multiprocessing.Queue()
         self.processes = {}
-        for process in range(0, max_processes):
-            print process
-            self.processes[process] = Worker(self.queue)
-            self.processes[process].start()
+        self.max_processes = max_processes
     def add_website(self, website_url):
         self.queue.put((website_url, 0))
-
+    def begin(self):
+        for process in range(0, self.max_processes):
+            print process
+            self.processes[process] = Worker(self.queue)
+            self.processes[process].run()
 
 class Worker(multiprocessing.Process):
     def __init__(self, queue):
@@ -93,9 +89,6 @@ class Worker(multiprocessing.Process):
         self.queue = queue
         self.parser = MyHTMLParser()
         self.queue_item = None
-        logging.info("init - ok")
-        self.pymongo_oop = pymongo_recorder(MongoClient(MY_HOST, 27017))
-        logging.info("init - ok - complete")
     def run(self):
         while True:
             try:
@@ -106,7 +99,6 @@ class Worker(multiprocessing.Process):
                 logging.info("init - run - 2")
             except Exception:
                 logging.exception('Worker-Exception-run()')
-                logging.info(str(self.queue.empty()))
     def work(self, queue_item):
         logging.info(str(queue_item))
         try:
@@ -124,9 +116,7 @@ class Worker(multiprocessing.Process):
                 logging.info("ok - 3")
                 logging.info(str(self.urls))
                 self.data = "".join(self.parser.data_list)
-                self.data = self.data.replace('\n', '')
-                self.data = self.data.replace('\t', '')
-                self.data = self.data.replace('\r', '')
+                self.data = re.sub("(\\n|\\t|\\r)" , "", self.data)
                 self.data = re.split(split_regex , self.data)
                 logging.info("ok - 4")
                 logging.info(str(self.data))
@@ -142,3 +132,4 @@ class Worker(multiprocessing.Process):
 if __name__ == '__main__':
     crawl = Crawler(1)
     crawl.add_website("http://koslib.com/")
+    crawl.begin()
