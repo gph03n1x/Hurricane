@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import re
 import string
 import urllib2
@@ -12,9 +14,6 @@ SCANNED_ROBOTS = {}
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
 url_regex = re.compile(r'href=[\'"]?([^\'" >]+)', re.VERBOSE | re.MULTILINE)
-split_regex = re.compile(r'\s+', re.VERBOSE | re.MULTILINE)
-
-
 
 class MyHTMLParser(HTMLParser):
     def reset_list(self):
@@ -102,12 +101,11 @@ class Worker(multiprocessing.Process):
                 self.parser.feed(self.data)
                 self.data = "".join(self.parser.data_list)
                 self.data = re.sub("(\\n|\\t|\\r)" , "", self.data)
-                self.data = re.split(split_regex , self.data)
+                #self.data = re.split(split_regex , self.data)
                 for url in self.urls:
-                    if queue_item[1] + 1 <= 2:
+                    if queue_item[1] + 1 <= 2 and not (queue_item[0] in self.scanned_urls):
                         self.queue.put((url, queue_item[1] + 1))
-                for data in self.data:
-                    self.file_object.recorder_db(data, queue_item[0])
+                self.file_object.recorder_db(self.data, queue_item[0])
         except Exception:
             logging.exception('Worker-Exception-work()')
 
