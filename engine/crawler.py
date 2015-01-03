@@ -101,9 +101,8 @@ class Worker(multiprocessing.Process):
                 self.parser.feed(self.data)
                 self.data = "".join(self.parser.data_list)
                 self.data = re.sub("(\\n|\\t|\\r)" , "", self.data)
-                #self.data = re.split(split_regex , self.data)
                 for url in self.urls:
-                    if queue_item[1] + 1 <= 2 and not (queue_item[0] in self.scanned_urls):
+                    if queue_item[1] + 1 <= 2 and not (queue_item[0] in self.file_object.scanned_urls):
                         self.queue.put((url, queue_item[1] + 1))
                 self.file_object.recorder_db(self.data, queue_item[0])
         except Exception:

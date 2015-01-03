@@ -11,22 +11,28 @@ from pprint import pprint
 split_regex = re.compile(r'\s+')
 
 class SearchHandler(tornado.web.RequestHandler):
-    def get(self, arguments):
+    def get(self):
         self.render("main.html")
     def post(self):
-        try:
-            self.get_argument('search_string')
-        except:
-            self.render("main.html")
-        else:
-            search_string = re.split(split_regex , self.get_argument('search_string'))
-            for part in search_string:
-                #create a string like this (?=.*\bjack\b)(?=.*\bjames\b).*
-                pass
+        self.get_argument('search_string')
+        search_string = re.split(split_regex , self.get_argument('search_string'))
+        initial = r""
 
+        for part in search_string:
+
+            initial = r"%s(?=.*\b%s\b)" % (initial, part)
+            #create a string like this (?=.*\bjack\b)(?=.*\bjames\b).*
+            #pass
+        initial = r"%s.*\s?:(?P<url>.+)" % (initial)
+        self.data_file = open("data.txt", "r")
+        dt = self.data_file.read()
+        matches = re.match(initial, dt)
+        self.data_file.close()
+        # print(len(matches), dt)
+        print(initial, matches.group('url'))
 
 class CrawlHandler(tornado.web.RequestHandler):
-    def get(self, arguments):
+    def get(self):
         self.render("crawl.html")
     def post(self):
         pass
@@ -38,6 +44,7 @@ application = tornado.web.Application(
     (r"/crawl", SearchHandler),
     (r"/crawl/(.+)", SearchHandler)
     ],
+    serve_traceback=True,
     template_path=os.path.join(os.path.dirname(__file__), "templates"),
     static_path=os.path.join(os.path.dirname(__file__), "static"),
     )
