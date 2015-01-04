@@ -93,8 +93,8 @@ class Crawler(object):
         self.queue = multiprocessing.Queue()
         self.processes = {}
         self.max_processes = max_processes
-        #self.file_object = file_storage()
         self.file_object = pymongo_recorder(self.max_processes)
+
     def add_website(self, website_url):
         self.queue.put((website_url, 0))
 
@@ -143,7 +143,7 @@ class Worker(threading.Thread):
                     pprint(url)
                     if queue_item[1] + 1 <= 2 and (not (url in self.file_object.scanned_urls)):
                         self.queue.put((url, queue_item[1] + 1))
-                self.file_object.recorder_db(self.data, queue_item[0])
+                self.file_object.recorder_db(self.data.lower(), queue_item[0])
         except Exception:
             logging.exception('Worker-Exception-work()')
 

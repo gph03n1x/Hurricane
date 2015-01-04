@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-__author__ = 'John'
 import re
 import os.path
 import tornado.ioloop
@@ -8,33 +7,42 @@ import tornado.web
 import engine.crawler as crawler
 from engine.utils import http_checker
 from pprint import pprint
+from pymongo import MongoClient
 
+
+CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=200)
+POSTS = CLIENT['test']['lists']
 split_regex = re.compile(r'\s+')
+
 
 class SearchHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("main.html", results=[])
+
     def post(self):
         self.get_argument('search_string')
+        # Clean up search from useless spaces
         search_string = re.split(split_regex , self.get_argument('search_string'))
+
+
+        # Create a string like this (?=.*\bjack\b)(?=.*\bjames\b).*
+        # Which is used for searching in any order for as many words
         initial = r""
-
         for part in search_string:
-
             initial = r"%s(?=.*\b%s\b)" % (initial, part)
-            #create a string like this (?=.*\bjack\b)(?=.*\bjames\b).*
-            #pass
-        initial = r"(?P<data>%s.*)\s?:(?P<url>.+)" % (initial)
-        self.data_file = open("data.txt", "r")
-        dt = self.data_file.read()
-        matches = re.match(initial, dt)
-        matched_results = [{'content': match.group('data')[:41],
-                            'url': http_checker(match.group('url'))} for match in re.finditer(initial, dt)]
-        pprint(matched_results)
-        self.data_file.close()
+        initial = r"(%s.*)" % (initial)
+
+        # Fetch results from mongodb
+        matched_results = [
+            {
+                # Get the main part of the crawled webpage
+                'content': match['data'][len(match['data']) - 20 :len(match['data']) + 20],
+                # Get the url
+                'url': http_checker(match['urls'])
+            } for match in POSTS.find({"data": { '$regex': initial}})
+        ]
+
         self.render("main.html", results=matched_results)
-        # print(len(matches), dt)
-        #print(initial, matches.group('url'))
 
 class CrawlHandler(tornado.web.RequestHandler):
     def get(self):
