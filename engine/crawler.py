@@ -6,9 +6,11 @@ import urllib2
 import logging
 import codecs
 import multiprocessing
+import threading
 from time import sleep
 from pprint import pprint
 from HTMLParser import HTMLParser
+from pymongo import MongoClient
 
 global SCANNED_ROBOTS
 SCANNED_ROBOTS = {}
@@ -30,6 +32,36 @@ class MyHTMLParser(HTMLParser):
         if self.lock is False:
             self.data_list.append(data)
 
+class pymongo_recorder(object):
+    def __init__(self, max_pool):
+        CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=max_pool)
+        self.posts = CLIENT['test']['lists']
+        self.urls = CLIENT['test']['urls']
+        self.scanned_urls = []
+
+    def record_url(self, url):
+        if self.urls.find({"urls": str(url)}).count() == 0:
+            self.urls.insert({"urls": str(url)})
+            self.scanned_urls.append(str(url))
+            return True
+        return False
+
+    def recorder_db(self, data, urls):
+        # Database Update
+        post = {"data": data, "urls": urls}
+        if self.posts.find({"data": str(data)}).count() == 0:
+            try:
+                self.posts.insert(post)
+            except Exception:
+                logging.exception('Recorder-mongo-db')
+        else:
+            try:
+                post_list = self.posts.find({"data": str(data)})
+                post_list["data"] = post_list["data"] + post["data"]
+                post_id = post_list["_id"]
+                self.posts.update({"_id": post_id}, {"$set": post_list})
+            except Exception:
+                logging.exception('Recorder-mongo-db-Update')
 
 class file_storage(object):
     def __init__(self):
@@ -56,15 +88,13 @@ class file_storage(object):
         self.data_file.write(string_construct)
         self.data_file.close()
 
-
-
-
 class Crawler(object):
     def __init__(self, max_processes):
         self.queue = multiprocessing.Queue()
         self.processes = {}
         self.max_processes = max_processes
-        self.file_object = file_storage()
+        #self.file_object = file_storage()
+        self.file_object = pymongo_recorder(self.max_processes)
     def add_website(self, website_url):
         self.queue.put((website_url, 0))
 
@@ -73,7 +103,7 @@ class Crawler(object):
             self.processes[process] = Worker(self.queue, self.file_object)
             self.processes[process].start()
 
-class Worker(multiprocessing.Process):
+class Worker(threading.Thread):
     def __init__(self, queue, file_object):
         super(Worker, self).__init__()
         self.queue = queue
