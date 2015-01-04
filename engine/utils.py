@@ -21,6 +21,8 @@ def http_checker(url):
     if ("http://" in url) or ("https://" in url):
         return url
     else:
+        if url[:2] == "//":
+            return ("http:" + url)
         return ("http://" + url)
 
 

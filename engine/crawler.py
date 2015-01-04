@@ -4,7 +4,9 @@ import re
 import string
 import urllib2
 import logging
+import codecs
 import multiprocessing
+from time import sleep
 from pprint import pprint
 from HTMLParser import HTMLParser
 
@@ -32,7 +34,7 @@ class MyHTMLParser(HTMLParser):
 class file_storage(object):
     def __init__(self):
         try:
-            self.urls_file = open("urls.txt", "r")
+            self.urls_file = codecs.open("urls.txt", "r", "utf-8")
             self.scanned_urls = self.urls_file.read().split("\n")
             self.urls_file.close()
         except IOError:
@@ -41,7 +43,7 @@ class file_storage(object):
     def record_url(self, url):
         if not (url in self.scanned_urls):
             string_construct = "%s\n" % (url)
-            self.urls_file_append = open("urls.txt", "a")
+            self.urls_file_append = codecs.open("urls.txt", "a", "utf-8")
             self.urls_file_append.write(string_construct)
             self.urls_file_append.close()
             self.scanned_urls.append(url)
@@ -49,7 +51,7 @@ class file_storage(object):
         return False
 
     def recorder_db(self, data, url):
-        self.data_file = open("data.txt", "a")
+        self.data_file = codecs.open("data.txt", "a", "utf-8")
         string_construct = "%s:%s\n" % (data.lower(), url)
         self.data_file.write(string_construct)
         self.data_file.close()
@@ -85,6 +87,8 @@ class Worker(multiprocessing.Process):
                 if not self.queue.empty():
                     item = self.queue.get()
                     self.work(item)
+                else:
+                    sleep(1)
             except Exception:
                 logging.exception('Worker-Exception-run()')
 
@@ -97,12 +101,17 @@ class Worker(multiprocessing.Process):
                 self.req.add_header('User-agent', 'Hurricane/0.1')
                 self.url = urllib2.urlopen(self.req)
                 self.data = self.url.read()
+                self.encoding = self.url.headers.getparam('charset')
                 self.urls = re.findall(url_regex, self.data)
-                self.parser.feed(self.data)
+                if type(self.encoding) != None and len(self.encoding) > 0:
+                    self.parser.feed(self.data.decode(self.encoding))
+                else:
+                    self.parser.feed(self.data)
                 self.data = "".join(self.parser.data_list)
                 self.data = re.sub("(\\n|\\t|\\r)" , "", self.data)
                 for url in self.urls:
-                    if queue_item[1] + 1 <= 2 and not (queue_item[0] in self.file_object.scanned_urls):
+                    pprint(url)
+                    if queue_item[1] + 1 <= 2 and (not (url in self.file_object.scanned_urls)):
                         self.queue.put((url, queue_item[1] + 1))
                 self.file_object.recorder_db(self.data, queue_item[0])
         except Exception:

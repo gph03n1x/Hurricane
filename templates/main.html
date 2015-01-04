@@ -37,6 +37,16 @@
 </nav>
 
 
+{% for result in results %}
+        <div class="panel panel-default">
+
+          <div class="panel-heading"><a href={% raw result['url'] %}>{% raw result['url'] %}</a></div>
+          <div class="panel-body">
+            {% raw result['content'] %}
+          </div>
+        </div>
+{% end %}
+
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 
 </body>

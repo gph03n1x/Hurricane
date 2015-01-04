@@ -6,13 +6,14 @@ import os.path
 import tornado.ioloop
 import tornado.web
 import engine.crawler as crawler
+from engine.utils import http_checker
 from pprint import pprint
 
 split_regex = re.compile(r'\s+')
 
 class SearchHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("main.html")
+        self.render("main.html", results=[])
     def post(self):
         self.get_argument('search_string')
         search_string = re.split(split_regex , self.get_argument('search_string'))
@@ -23,13 +24,17 @@ class SearchHandler(tornado.web.RequestHandler):
             initial = r"%s(?=.*\b%s\b)" % (initial, part)
             #create a string like this (?=.*\bjack\b)(?=.*\bjames\b).*
             #pass
-        initial = r"%s.*\s?:(?P<url>.+)" % (initial)
+        initial = r"(?P<data>%s.*)\s?:(?P<url>.+)" % (initial)
         self.data_file = open("data.txt", "r")
         dt = self.data_file.read()
         matches = re.match(initial, dt)
+        matched_results = [{'content': match.group('data')[:41],
+                            'url': http_checker(match.group('url'))} for match in re.finditer(initial, dt)]
+        pprint(matched_results)
         self.data_file.close()
+        self.render("main.html", results=matched_results)
         # print(len(matches), dt)
-        print(initial, matches.group('url'))
+        #print(initial, matches.group('url'))
 
 class CrawlHandler(tornado.web.RequestHandler):
     def get(self):

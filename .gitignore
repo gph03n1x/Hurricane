@@ -1,5 +1,7 @@
 # Avoid Pycharm .idea folder
 .idea
+# Avoid file storage txt files
+.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
