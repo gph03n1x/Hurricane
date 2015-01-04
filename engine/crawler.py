@@ -18,6 +18,8 @@ SCANNED_ROBOTS = {}
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
 url_regex = re.compile(r'href=[\'"]?([^\'" >]+)', re.VERBOSE | re.MULTILINE)
+split_regex = re.compile(r'\s+')
+
 
 class MyHTMLParser(HTMLParser):
     def reset_list(self):
@@ -49,19 +51,10 @@ class pymongo_recorder(object):
     def recorder_db(self, data, urls):
         # Database Update
         post = {"data": data, "urls": urls}
-        if self.posts.find({"data": str(data)}).count() == 0:
-            try:
-                self.posts.insert(post)
-            except Exception:
-                logging.exception('Recorder-mongo-db')
-        else:
-            try:
-                post_list = self.posts.find({"data": str(data)})
-                post_list["data"] = post_list["data"] + post["data"]
-                post_id = post_list["_id"]
-                self.posts.update({"_id": post_id}, {"$set": post_list})
-            except Exception:
-                logging.exception('Recorder-mongo-db-Update')
+        try:
+            self.posts.insert(post)
+        except Exception:
+            logging.exception('Recorder-mongo-db')
 
 class file_storage(object):
     def __init__(self):
@@ -127,27 +120,33 @@ class Worker(threading.Thread):
         try:
             if self.file_object.record_url(queue_item[0]):
                 self.parser.reset_list()
+
                 self.req = urllib2.Request(queue_item[0])
                 self.req.add_header('User-agent', 'Hurricane/0.1')
                 self.url = urllib2.urlopen(self.req)
                 self.data = self.url.read()
                 self.encoding = self.url.headers.getparam('charset')
-                self.urls = re.findall(url_regex, self.data)
-                if type(self.encoding) != None and len(self.encoding) > 0:
+                self.urls = re.findall(url_regex, self.data) # Fetch all urls from the webpage
+
+                if type(self.encoding) != None:
                     self.parser.feed(self.data.decode(self.encoding))
                 else:
                     self.parser.feed(self.data)
                 self.data = "".join(self.parser.data_list)
-                self.data = re.sub("(\\n|\\t|\\r)" , "", self.data)
+
+                self.data = re.sub("(\\n|\\t|\\r)" , "", self.data) # Remove unnecessary escape characters
+                self.data = re.sub(split_regex , " ", self.data) # Replace html spaces with only one
+                self.file_object.recorder_db(self.data.lower(), queue_item[0]) # Record the results
+                # Add the urls found in the webpage
                 for url in self.urls:
-                    pprint(url)
                     if queue_item[1] + 1 <= 2 and (not (url in self.file_object.scanned_urls)):
+                        pprint(url)
                         self.queue.put((url, queue_item[1] + 1))
-                self.file_object.recorder_db(self.data.lower(), queue_item[0])
+
         except Exception:
             logging.exception('Worker-Exception-work()')
 
 if __name__ == '__main__':
-    crawl = Crawler(1)
+    crawl = Crawler(2)
     crawl.add_website("http://koslib.com/")
     crawl.begin()
