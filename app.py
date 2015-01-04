@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import string
 import os.path
 import tornado.ioloop
 import tornado.web
@@ -17,12 +18,13 @@ split_regex = re.compile(r'\s+')
 
 class SearchHandler(tornado.web.RequestHandler):
     def get(self):
+        # Show an empty webpage ready to search
         self.render("main.html", results=[])
 
     def post(self):
         self.get_argument('search_string')
         # Clean up search from useless spaces
-        search_string = re.split(split_regex , self.get_argument('search_string'))
+        search_string = re.split(split_regex , self.get_argument('search_string').lower())
 
 
         # Create a string like this (?=.*\bjack\b)(?=.*\bjames\b).*
@@ -39,7 +41,7 @@ class SearchHandler(tornado.web.RequestHandler):
                 'content': match['data'][len(match['data']) - 20 :len(match['data']) + 20],
                 # Get the url
                 'url': http_checker(match['urls'])
-            } for match in POSTS.find({"data": { '$regex': initial}})
+            } for match in POSTS.find({"data": { '$regex': initial}}) # Search mongodb
         ]
 
         self.render("main.html", results=matched_results)
