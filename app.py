@@ -11,6 +11,10 @@ from pprint import pprint
 from pymongo import MongoClient
 
 
+crawl = crawler.Crawler(2)
+    #crawl.add_website("http://koslib.com/")
+crawl.begin()
+
 CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=200)
 POSTS = CLIENT['test']['lists']
 split_regex = re.compile(r'\s+')
@@ -48,7 +52,7 @@ class SearchHandler(tornado.web.RequestHandler):
 
 class CrawlHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("crawl.html")
+        self.render("search.html")
     def post(self):
         pass
 
@@ -56,8 +60,7 @@ class CrawlHandler(tornado.web.RequestHandler):
 application = tornado.web.Application(
     [
     (r"/", SearchHandler),
-    (r"/crawl", SearchHandler),
-    (r"/crawl/(.+)", SearchHandler)
+    (r"/crawl", CrawlHandler)
     ],
     serve_traceback=True,
     template_path=os.path.join(os.path.dirname(__file__), "templates"),
