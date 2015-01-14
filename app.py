@@ -21,6 +21,7 @@ split_regex = re.compile(r'\s+')
 
 
 class SearchHandler(tornado.web.RequestHandler):
+
     def get(self):
         # Show an empty webpage ready to search
         self.render("main.html", results=[])
@@ -50,12 +51,17 @@ class SearchHandler(tornado.web.RequestHandler):
 
         self.render("main.html", results=matched_results)
 
+
 class CrawlHandler(tornado.web.RequestHandler):
+
     def get(self):
-        self.render("crawl.html")
+        urls = [crawl.threads[thread].current_url for thread in crawl.threads]
+        self.render("crawl.html", results=urls)
+
     def post(self):
         self.get_argument('search_string')
         crawl.add_website(self.get_argument('search_string'))
+        self.get()
 
 
 application = tornado.web.Application(
