@@ -1,7 +1,21 @@
 # -*- coding: utf-8 -*-
-import sys
-import HTMLParser
-from core.utils import hex_checker
+
+def gather_words_around_search_word(given_description, given_word, length):
+    position = given_description.find(given_word)
+    return given_description[position - length / 2 : position + length / 2]
+
+
+
+def crop_fragment_identifier(url_path):
+    if "#" in url_path:
+        return url_path.split("#")[0]
+    return url_path
+
+
+def complete_domain(url_path, current_domain):
+    if url_path[0] == "/":
+        return "%s%s" % (current_domain, url_path)
+    return url_path
 
 
 def url_to_domain(url_path):

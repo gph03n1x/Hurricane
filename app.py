@@ -6,13 +6,13 @@ import os.path
 import tornado.ioloop
 import tornado.web
 import engine.crawler as crawler
+from engine.filters import gather_words_around_search_word as gwasw
 from engine.utils import http_checker
 from pprint import pprint
 from pymongo import MongoClient
 
 
 crawl = crawler.Crawler(2)
-    #crawl.add_website("http://koslib.com/")
 crawl.begin()
 
 CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=200)
@@ -42,7 +42,7 @@ class SearchHandler(tornado.web.RequestHandler):
         matched_results = [
             {
                 # Get the main part of the crawled webpage
-                'content': match['data'][len(match['data']) - 20 :len(match['data']) + 20],
+                'content': gwasw(match['data'], search_string[0], 60),
                 # Get the url
                 'url': http_checker(match['urls'])
             } for match in POSTS.find({"data": { '$regex': initial}}) # Search mongodb
@@ -52,9 +52,10 @@ class SearchHandler(tornado.web.RequestHandler):
 
 class CrawlHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("search.html")
+        self.render("crawl.html")
     def post(self):
-        pass
+        self.get_argument('search_string')
+        crawl.add_website(self.get_argument('search_string'))
 
 
 application = tornado.web.Application(
