@@ -36,18 +36,30 @@
   </div><!-- /.container-fluid -->
 </nav>
 
+<div id="container">
+    {% for result in results %}
+            <div class="panel panel-default">
 
-{% for result in results %}
-        <div class="panel panel-default">
-
-          <div class="panel-heading"><a href={% raw result['url'] %}>{% raw result['url'] %}</a></div>
-          <div class="panel-body">
-            {% raw result['content'] %}
-          </div>
-        </div>
-{% end %}
+              <div class="panel-heading"><a href={% raw result['url'] %}>{% raw result['url'] %}</a></div>
+              <div class="panel-body">
+                {% raw result['content'] %}
+              </div>
+            </div>
+    {% end %}
+</div>
 
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
-
+<script>
+var url = $(location).attr('href');
+$( "#search_string" ).on('input', function() {
+    var search_input = $( "#search_string" ).val();
+    if (search_input.length > 2) {
+        $.post( url, { search_string: search_input, nohtml: "true" }, function( data ) {
+            $( "#container" ).empty();
+            $( "#container" ).append( data );
+        });
+    }
+});
+</script>
 </body>
 </html>

@@ -31,7 +31,6 @@ class SearchHandler(tornado.web.RequestHandler):
         # Clean up search from useless spaces
         search_string = re.split(split_regex , self.get_argument('search_string').lower())
 
-
         # Create a string like this (?=.*\bjack\b)(?=.*\bjames\b).*
         # Which is used for searching in any order for as many words
         initial = r""
@@ -49,7 +48,16 @@ class SearchHandler(tornado.web.RequestHandler):
             } for match in POSTS.find({"data": { '$regex': initial}}) # Search mongodb
         ]
 
-        self.render("main.html", results=matched_results)
+        try:
+            self.get_argument('nohtml')
+        except Exception:
+            self.render("main.html", results=matched_results)
+        else:
+            for result in matched_results:
+                response = """<div class="panel panel-default"><div class="panel-heading"><a href=%s>
+                %s</a></div><div class="panel-body">%s</div></div>
+                """ % (result['url'], result['url'], result['content'])
+                self.write(response)
 
 
 class CrawlHandler(tornado.web.RequestHandler):
