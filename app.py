@@ -5,6 +5,7 @@ import string
 import os.path
 import tornado.ioloop
 import tornado.web
+import tornado.escape as esc
 import engine.crawler as crawler
 from engine.filters import gather_words_around_search_word as gwasw
 from engine.utils import http_checker
@@ -54,9 +55,16 @@ class SearchHandler(tornado.web.RequestHandler):
             self.render("main.html", results=matched_results)
         else:
             for result in matched_results:
-                response = """<div class="panel panel-default"><div class="panel-heading"><a href=%s>
-                %s</a></div><div class="panel-body">%s</div></div>
-                """ % (result['url'], result['url'], result['content'])
+                response = """
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a href="%s">%s</a>
+                    </div>JS
+                    <div class="panel-body">%s</div>
+                </div>
+                """ % (esc.xhtml_escape(result['url']),
+                       esc.xhtml_escape(result['url']),
+                       esc.xhtml_escape(result['content']))
                 self.write(response)
 
 

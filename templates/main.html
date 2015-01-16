@@ -39,10 +39,9 @@
 <div id="container">
     {% for result in results %}
             <div class="panel panel-default">
-
-              <div class="panel-heading"><a href={% raw result['url'] %}>{% raw result['url'] %}</a></div>
+              <div class="panel-heading"><a href={{ escape(result['url']) }}>{{ escape(result['url']) }}</a></div>
               <div class="panel-body">
-                {% raw result['content'] %}
+                {{ escape(result['content']) }}
               </div>
             </div>
     {% end %}
