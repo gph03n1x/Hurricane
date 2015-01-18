@@ -28,8 +28,11 @@ def crop_fragment_identifier(url_path):
 
 
 def complete_domain(url_path, current_domain):
-    if url_path[0] == "/":
-        return "%s%s" % (current_domain, url_path)
+    try:
+        if url_path[0] == "/":
+            return "%s%s" % (current_domain, url_path)
+    except IndexError:
+        pass
     return url_path
 
 

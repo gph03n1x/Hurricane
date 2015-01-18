@@ -19,7 +19,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="#">Hurricane</a>
+      <a class="navbar-brand" href="/">Hurricane</a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
@@ -37,6 +37,7 @@
 </nav>
 
 <div class="row">
+  <div class="col-md-1"></div>
   <div class="col-md-6">
     {% for result in results %}
             <div class="panel panel-default">
@@ -46,8 +47,8 @@
             </div>
     {% end %}
   </div>
-  <div class="col-md-6">
-      <button type="submit" class="btn btn-primary" onclick="location.reload();">Refresh</button>
+  <div class="col-md-4">
+      <button type="submit" class="btn btn-primary btn-block" onclick="location.reload();">Refresh</button>
   </div>
 </div>
 

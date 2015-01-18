@@ -49,7 +49,7 @@ class SearchHandler(tornado.web.RequestHandler):
         matched_results = [
             {
                 # Get the main part of the crawled webpage
-                'content': gwasw(match['data'], search_string[0], 60),
+                'content': gwasw(match['data'], search_string[0], 90),
                 # Get the url
                 'url': http_checker(match['url'])
             } for match in POSTS.find({"data": { '$regex': initial}}) # Search mongodb

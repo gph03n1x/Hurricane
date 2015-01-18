@@ -17,6 +17,7 @@ import engine.storage as storage
 global SCANNED_ROBOTS
 SCANNED_ROBOTS = {}
 
+
 url_regex = re.compile(r'href=[\'"]?([^\'" >]+)', re.VERBOSE | re.MULTILINE)
 split_regex = re.compile(r'\s+')
 escape_regex = re.compile('(\\n|\\t|\\r)')
@@ -86,6 +87,9 @@ class Worker(threading.Thread):
         self.current_url = queue_item[0]
         self.depth = queue_item[1]
         logging.info(str(queue_item))
+        if len(queue_item) > 2:
+            sleep(queue_item[2])
+
         try:
             if self.file_object.record_url(self.current_url):
                 self.parser.reset_list()
@@ -97,7 +101,8 @@ class Worker(threading.Thread):
                 except urllib2.URLError:
                     pass
                 except urllib2.HTTPError:
-                    pass
+                    if not (len(queue_item) > 2):
+                        self.queue.put((self.current_url, self.depth, 1))
                 else:
                     self.data = self.url.read() # Fetch the data from the webpage
                     self.encoding = self.url.headers.getparam('charset') # Fetch
@@ -106,8 +111,13 @@ class Worker(threading.Thread):
 
                     try: # If the webpage has a charset set
                         self.parser.feed(self.data.decode(self.encoding)) # Parse a decoded webpage
-                    except TypeError: # If an exception is raised
-                        self.parser.feed(self.data) # Parse the webpage as it is
+                    except (TypeError, UnicodeDecodeError): # If an exception is raised
+                        try:
+                            self.parser.feed(self.data) # Parse the webpage as it is
+                        except UnicodeDecodeError:
+                            self.parser.feed(self.data.decode('utf-8'))
+
+
                     self.data = "".join(self.parser.data_list) # get all the data in a long string
 
                     self.data = re.sub(escape_regex , "", self.data) # Remove unnecessary escape characters
