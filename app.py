@@ -3,22 +3,28 @@
 import re
 import string
 import os.path
+import logging
 import tornado.ioloop
 import tornado.web
 import tornado.escape as esc
 import engine.crawler as crawler
-from engine.filters import gather_words_around_search_word as gwasw
-from engine.utils import http_checker
 from pprint import pprint
 from pymongo import MongoClient
+from engine.utils import http_checker
+from engine.filters import gather_words_around_search_word as gwasw
 
+logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
-crawl = crawler.Crawler(2)
+crawl = crawler.Crawler(4)
 crawl.begin()
-
-CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=200)
-POSTS = CLIENT['test']['lists']
-split_regex = re.compile(r'\s+')
+try:
+    CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=200)
+    POSTS = CLIENT['test']['lists']
+    split_regex = re.compile(r'\s+')
+except Exception:
+    pass
+else:
+    print "Connection with the database was successfull"
 
 
 class SearchHandler(tornado.web.RequestHandler):
@@ -45,7 +51,7 @@ class SearchHandler(tornado.web.RequestHandler):
                 # Get the main part of the crawled webpage
                 'content': gwasw(match['data'], search_string[0], 60),
                 # Get the url
-                'url': http_checker(match['urls'])
+                'url': http_checker(match['url'])
             } for match in POSTS.find({"data": { '$regex': initial}}) # Search mongodb
         ]
 
@@ -59,7 +65,7 @@ class SearchHandler(tornado.web.RequestHandler):
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <a href="%s">%s</a>
-                    </div>JS
+                    </div>
                     <div class="panel-body">%s</div>
                 </div>
                 """ % (esc.xhtml_escape(result['url']),
@@ -77,7 +83,7 @@ class CrawlHandler(tornado.web.RequestHandler):
     def post(self):
         self.get_argument('search_string')
         crawl.add_website(self.get_argument('search_string'))
-        self.get()
+        self.redirect("/crawl")
 
 
 application = tornado.web.Application(

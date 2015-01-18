@@ -36,14 +36,20 @@
   </div><!-- /.container-fluid -->
 </nav>
 
-{% for result in results %}
-        <div class="panel panel-default">
-          <div class="panel-body">
-            {{ escape (result) }}
-          </div>
-        </div>
-{% end %}
-
+<div class="row">
+  <div class="col-md-6">
+    {% for result in results %}
+            <div class="panel panel-default">
+              <div class="panel-body">
+                {{ escape (result) }}
+              </div>
+            </div>
+    {% end %}
+  </div>
+  <div class="col-md-6">
+      <button type="submit" class="btn btn-primary" onclick="location.reload();">Refresh</button>
+  </div>
+</div>
 
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 

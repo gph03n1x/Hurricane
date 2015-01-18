@@ -35,8 +35,9 @@
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
 </nav>
-
-<div id="container">
+<div class="row">
+  <div class="col-md-8">
+    <div id="container">
     {% for result in results %}
             <div class="panel panel-default">
               <div class="panel-heading"><a href={{ escape(result['url']) }}>{{ escape(result['url']) }}</a></div>
@@ -45,6 +46,8 @@
               </div>
             </div>
     {% end %}
+    </div>
+  </div>
 </div>
 
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
