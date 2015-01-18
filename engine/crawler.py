@@ -94,7 +94,9 @@ class Worker(threading.Thread):
                 self.req.add_header('User-agent', 'Hurricane/1.0')
                 try:
                     self.url = urllib2.urlopen(self.req)
-                except:
+                except urllib2.URLError:
+                    pass
+                except urllib2.HTTPError:
                     pass
                 else:
                     self.data = self.url.read() # Fetch the data from the webpage
