@@ -28,17 +28,8 @@
       <form class="navbar-form navbar-left" role="search" action="/" method="post">
         <div class="form-group">
           <input type="text" class="form-control" placeholder="search" id="search_string" name="search_string">
-          <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-            <span class="caret"></span>
-            <span class="sr-only">Toggle Dropdown</span>
-          </button>
-          <ul class="dropdown-menu" role="menu" id="autocomplete">
-            <li><a href="#">Action</a></li>
-          </ul>
         </div>
-
         <button type="submit" class="btn btn-default">Search</button>
-
       </form>
 
     </div><!-- /.navbar-collapse -->
@@ -46,7 +37,7 @@
 </nav>
 <div class="row">
   <div class="col-md-1"></div>
-  <div class="col-md-8">
+  <div class="col-md-7">
     <div id="container">
     {% for result in results %}
             <div class="panel panel-default">
@@ -57,11 +48,15 @@
             </div>
     {% end %}
     </div>
+
+  </div>
+  <div class="col-md-3">
+      <ul class="list-group" role="menu" id="autocomplete">
+      </ul>
   </div>
 </div>
 
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
-<script src="{{ static_url('bootstrap.min.js') }}"></script>
 <script src="{{ static_url('instant.js') }}"></script>
 </body>
 </html>

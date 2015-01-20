@@ -9,6 +9,7 @@ class pymongo_recorder(object):
     def __init__(self, max_pool):
         CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=max_pool)
         self.lists = CLIENT['test']['lists']
+        self.search = CLIENT['test']['search']
         self.scanned_urls = []
 
     def record_url(self, url):
@@ -28,7 +29,7 @@ class pymongo_recorder(object):
     def record_db(self, data, url):
         # Update the database with url and data
         try:
-            data_list = {"data": data, "url": url, "time_scanned": datetime.now()}
+            data_list = {"data": data.encode('utf-8'), "url": url, "time_scanned": datetime.now()}
             list_result = self.lists.find({"url": url})
             if list_result.count() == 0:
                 self.lists.insert(data_list)
@@ -37,7 +38,7 @@ class pymongo_recorder(object):
                     {'_id':list_result[0]['_id']},
                     {
                         "$set": {
-                            "data": data,
+                            "data": data.encode('utf-8'),
                             "urls": url,
                             "time_scanned": datetime.now()
                         }

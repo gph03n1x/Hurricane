@@ -20,6 +20,7 @@ crawl.begin()
 try:
     CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=200)
     POSTS = CLIENT['test']['lists']
+    SEARCH = CLIENT['test']['search']
     split_regex = re.compile(r'\s+')
 except Exception:
     pass
@@ -33,8 +34,14 @@ class SearchHandler(tornado.web.RequestHandler):
         # Show an empty webpage ready to search
         self.render("main.html", results=[])
 
+    def record_search(self, search_string):
+        record = {"search": search_string}
+        if SEARCH.find(record).count() == 0:
+            SEARCH.insert(record)
+
     def post(self):
         self.get_argument('search_string')
+
         # Clean up search from useless spaces
         search_string = re.split(split_regex , self.get_argument('search_string').lower())
 
@@ -42,9 +49,8 @@ class SearchHandler(tornado.web.RequestHandler):
         # Which is used for searching in any order for as many words
         initial = r""
         for part in search_string:
-            initial = r"%s(?=.*\b%s\b)" % (initial, part)
+            initial = r"%s(?=.*\b%s\b)" % (initial.encode('utf8'), part)
         initial = r"(%s.*)" % (initial)
-
         # Fetch results from mongodb
         matched_results = [
             {
@@ -54,7 +60,8 @@ class SearchHandler(tornado.web.RequestHandler):
                 'url': http_checker(match['url'])
             } for match in POSTS.find({"data": { '$regex': initial}}) # Search mongodb
         ]
-
+        if len(matched_results) > 0:
+            self.record_search(self.get_argument('search_string'))
         try:
             self.get_argument('nohtml')
         except Exception:
@@ -74,6 +81,16 @@ class SearchHandler(tornado.web.RequestHandler):
                 self.write(response)
 
 
+class AutoCompleteHandler(tornado.web.RequestHandler):
+    def post(self):
+        initial = "(.*%s.*)" % (self.get_argument('search_string'))
+        for match in SEARCH.find({"search": { '$regex': initial}}):
+            response = """
+            <li class="list-group-item"><a onClick="a_onClick(\'%s\')">%s</a></li>
+            """ % (esc.xhtml_escape(match["search"]), esc.xhtml_escape(match["search"]))
+            self.write(response)
+
+
 class CrawlHandler(tornado.web.RequestHandler):
 
     def get(self):
@@ -89,6 +106,7 @@ class CrawlHandler(tornado.web.RequestHandler):
 application = tornado.web.Application(
     [
     (r"/", SearchHandler),
+    (r"/autocomplete", AutoCompleteHandler),
     (r"/crawl", CrawlHandler)
     ],
     serve_traceback=True,

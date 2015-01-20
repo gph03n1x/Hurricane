@@ -114,8 +114,8 @@ class Worker(threading.Thread):
                     except (TypeError, UnicodeDecodeError): # If an exception is raised
                         try:
                             self.parser.feed(self.data) # Parse the webpage as it is
-                        except UnicodeDecodeError:
-                            self.parser.feed(self.data.decode('utf-8'))
+                        except UnicodeDecodeError: # If an exception is raised again attempt a
+                            self.parser.feed(self.data.decode('utf-8')) # parsing with utf-8 decoded
 
 
                     self.data = "".join(self.parser.data_list) # get all the data in a long string
@@ -128,7 +128,7 @@ class Worker(threading.Thread):
                     for url in self.urls:
                         pprint(url)
 
-                        if self.depth + 1 <= 2 and (not (url in self.file_object.scanned_urls)):
+                        if self.depth + 1 <= 1 and (not (url in self.file_object.scanned_urls)):
                             # If the url doesnt exceed 2 depth and isn't already scanned
                             pprint(url)
 
