@@ -5,15 +5,15 @@ import robotparser
 
 def gather_robots_txt(domain):
     domain = url_to_domain(domain)
-    robots = http_checker(self.domain) + "/robots.txt"
+    robots = http_checker(domain) + "/robots.txt"
     try:
-        self.rp = robotparser.RobotFileParser()
-        self.rp.set_url(self.robots)
-        self.rp.read()
+        rp = robotparser.RobotFileParser()
+        rp.set_url(robots)
+        rp.read()
     except urllib2.HTTPError:
         return None
     else:
-        return self.rp
+        return rp
 
 
 def gather_words_around_search_word(given_description, given_word, length):

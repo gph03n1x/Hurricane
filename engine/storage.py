@@ -7,7 +7,7 @@ from pymongo import MongoClient
 class pymongo_recorder(object):
 
     def __init__(self, max_pool):
-        CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=max_pool)
+        CLIENT = MongoClient("127.0.0.1", 27017)
         self.lists = CLIENT['test']['lists']
         self.search = CLIENT['test']['search']
         self.scanned_urls = []

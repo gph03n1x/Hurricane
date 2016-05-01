@@ -18,7 +18,7 @@ logging.basicConfig(filename='error.log', level=logging.DEBUG)
 crawl = crawler.Crawler(4)
 crawl.begin()
 try:
-    CLIENT = MongoClient("127.0.0.1", 27017, max_pool_size=200)
+    CLIENT = MongoClient("127.0.0.1", 27017)
     POSTS = CLIENT['test']['lists']
     SEARCH = CLIENT['test']['search']
     split_regex = re.compile(r'\s+')
@@ -29,6 +29,9 @@ else:
 
 
 class SearchHandler(tornado.web.RequestHandler):
+    
+    # def initialize(self, database):
+        # self.DBI = database
 
     def get(self):
         # Show an empty webpage ready to search
