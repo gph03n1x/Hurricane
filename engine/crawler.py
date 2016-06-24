@@ -2,14 +2,15 @@
 
 import re
 import string
-import urllib2
 import logging
-import multiprocessing
 import threading
+import urllib.request
+import urllib.error
+import multiprocessing
 from time import sleep
 from datetime import datetime
 from pprint import pprint
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 from pymongo import MongoClient
 from engine.filters import complete_domain, crop_fragment_identifier
 import engine.config as config
@@ -44,10 +45,11 @@ class MyHTMLParser(HTMLParser):
 
 class Crawler(object):
 
-    def __init__(self, max_threads):
+    def __init__(self, max_threads, max_depth):
         self.queue = multiprocessing.Queue()
         self.threads = {}
         self.max_threads = max_threads
+        self.max_depth = max_depth
         # Create a data storage for the threads to use
         self.file_object = storage.pymongo_recorder(self.max_threads)
 
@@ -57,15 +59,16 @@ class Crawler(object):
     def begin(self):
         for thread in range(0, self.max_threads):
             # Spawn and start the threads
-            self.threads[thread] = Worker(self.queue, self.file_object)
+            self.threads[thread] = Worker(self.max_depth, self.queue, self.file_object)
             self.threads[thread].start()
 
 
 class Worker(threading.Thread):
 
-    def __init__(self, queue, file_object):
+    def __init__(self, max_depth, queue, file_object):
         super(Worker, self).__init__()
         self.queue = queue
+        self.max_depth = int(max_depth)
         self.file_object = file_object # file_object is the storage the crawler
                                        # will use .
         self.parser = MyHTMLParser()
@@ -86,36 +89,37 @@ class Worker(threading.Thread):
         # queue_item[0] is the url, queue_item[1] is the depth
         self.current_url = queue_item[0]
         self.depth = queue_item[1]
-        logging.info(str(queue_item))
+        #logging.info(str(queue_item))
         if len(queue_item) > 2:
             sleep(queue_item[2])
 
         try:
             if self.file_object.record_url(self.current_url):
                 self.parser.reset_list()
-
-                self.req = urllib2.Request(self.current_url) # Start a url request
-                self.req.add_header('User-agent', 'Hurricane/1.0')
                 try:
-                    self.url = urllib2.urlopen(self.req)
-                except urllib2.URLError:
+                    self.req = urllib.request.Request(self.current_url,
+                     headers={'User-Agent': 'Hurricane/1.1'})
+                    self.url = urllib.request.urlopen(self.req)
+                except urllib.error.URLError:
                     pass
-                except urllib2.HTTPError:
+                except urllib.error.HTTPError:
                     if not (len(queue_item) > 2):
                         self.queue.put((self.current_url, self.depth, 1))
                 else:
-                    self.data = self.url.read() # Fetch the data from the webpage
-                    self.encoding = self.url.headers.getparam('charset') # Fetch
+                    self.data = self.url.read()
+                    self.encoding = self.url.headers.get_content_charset()
+                    if self.encoding is None:
+                        # it is bytes probably ,ex: images
+                        return # nothing more to do here.
+
+                    self.data = self.data.decode(self.encoding) # Fetch the data from the webpage
 
                     self.urls = re.findall(url_regex, self.data) # Fetch all urls from the webpage
 
                     try: # If the webpage has a charset set
-                        self.parser.feed(self.data.decode(self.encoding)) # Parse a decoded webpage
+                        self.parser.feed(self.data) # Parse a decoded webpage
                     except (TypeError, UnicodeDecodeError): # If an exception is raised
-                        try:
-                            self.parser.feed(self.data) # Parse the webpage as it is
-                        except UnicodeDecodeError: # If an exception is raised again attempt a
-                            self.parser.feed(self.data.decode('utf-8')) # parsing with utf-8 decoded
+                        self.parser.feed(self.data.decode('utf-8')) # parsing with utf-8 decoded
 
 
                     self.data = "".join(self.parser.data_list) # get all the data in a long string
@@ -126,12 +130,11 @@ class Worker(threading.Thread):
 
                     # Add the urls found in the webpage
                     for url in self.urls:
-                        pprint(url)
+                        #pprint(url)
 
-                        if self.depth + 1 <= 1 and (not (url in self.file_object.scanned_urls)):
+                        if self.depth + 1 <= self.max_depth and (not (url in self.file_object.scanned_urls)):
                             # If the url doesnt exceed 2 depth and isn't already scanned
-                            pprint(url)
-
+                            #pprint(url)
                             self.queue.put((complete_domain(crop_fragment_identifier(url), self.current_url) ,
                                             self.depth + 1)) # Add the url to the queue and increase the depth
 

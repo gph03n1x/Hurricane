@@ -10,12 +10,13 @@ import tornado.escape as esc
 import engine.crawler as crawler
 from pprint import pprint
 from pymongo import MongoClient
+from engine.config import fetch_options
 from engine.utils import http_checker
 from engine.filters import gather_words_around_search_word as gwasw
 
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
-
-crawl = crawler.Crawler(4)
+OPTIONS = fetch_options()
+crawl = crawler.Crawler(4, OPTIONS["crawler"]["depth"])
 crawl.begin()
 try:
     CLIENT = MongoClient("127.0.0.1", 27017)
@@ -25,11 +26,11 @@ try:
 except Exception:
     pass
 else:
-    print "Connection with the database was successfull"
+    print("Connection with the database was successfull")
 
 
 class SearchHandler(tornado.web.RequestHandler):
-    
+
     # def initialize(self, database):
         # self.DBI = database
 
@@ -50,11 +51,11 @@ class SearchHandler(tornado.web.RequestHandler):
 
         # Create a string like this (?=.*\bjack\b)(?=.*\bjames\b).*
         # Which is used for searching in any order for as many words
-        initial = r""
-        for part in search_string:
-            initial = r"%s(?=.*\b%s\b)" % (initial.encode('utf8'), part)
-        initial = r"(%s.*)" % (initial)
+
+        initial = "".join(r"(?=.*\b{0}\b)".format(part) for part in search_string)
+        initial = r"({0}.*)".format(initial)
         # Fetch results from mongodb
+        print(initial)
         matched_results = [
             {
                 # Get the main part of the crawled webpage

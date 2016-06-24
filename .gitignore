@@ -7,6 +7,12 @@
 __pycache__/
 *.py[cod]
 
+# Batch files
+*.bat
+
+# Mongo db
+data/
+
 # C extensions
 *.so
 

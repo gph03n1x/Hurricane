@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-import urllib2
-import robotparser
+import urllib.error
+import urllib.robotparser
 
 
 def gather_robots_txt(domain):
     domain = url_to_domain(domain)
     robots = http_checker(domain) + "/robots.txt"
     try:
-        rp = robotparser.RobotFileParser()
+        rp = urllib.robotparser.RobotFileParser()
         rp.set_url(robots)
         rp.read()
-    except urllib2.HTTPError:
+    except urllib.error.HTTPError:
         return None
     else:
         return rp
@@ -18,7 +18,7 @@ def gather_robots_txt(domain):
 
 def gather_words_around_search_word(given_description, given_word, length):
     position = given_description.find(given_word)
-    return given_description[position - length / 2 : position + length / 2]
+    return given_description[position - length // 2 : position + length // 2]
 
 
 def crop_fragment_identifier(url_path):
