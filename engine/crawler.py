@@ -70,8 +70,10 @@ class Worker(threading.Thread):
         self.queue = queue
         self.max_depth = int(max_depth)
         self.file_object = file_object # file_object is the storage the crawler
-                                       # will use .
+                                       # will use
         self.parser = MyHTMLParser()
+        with open("stop-words/stop-words-english1.txt") as stop_words_file:
+            self.stop_words = stop_words_file.read().split("\n")
         self.current_url = "Idle"
     def run(self):
         while True:
@@ -101,11 +103,12 @@ class Worker(threading.Thread):
                      headers={'User-Agent': 'Hurricane/1.1'})
                     self.url = urllib.request.urlopen(self.req)
                 except urllib.error.URLError:
-                    pass
+                    print("[-] UrlError")
                 except urllib.error.HTTPError:
                     if not (len(queue_item) > 2):
                         self.queue.put((self.current_url, self.depth, 1))
                 else:
+                    print("[+] Opened successfully")
                     self.data = self.url.read()
                     self.encoding = self.url.headers.get_content_charset()
                     if self.encoding is None:
@@ -126,13 +129,17 @@ class Worker(threading.Thread):
 
                     self.data = re.sub(escape_regex , "", self.data) # Remove unnecessary escape characters
                     self.data = re.sub(split_regex , " ", self.data) # Replace html spaces with only one
+                    print("[*] Waiting ")
+                    for word in self.stop_words:
+                        self.data = self.data.replace(" "+word+" ", " ")
+                    print("[*] Done ")
                     self.file_object.record_db(self.data.lower(), self.current_url) # Record the results
 
                     # Add the urls found in the webpage
                     for url in self.urls:
                         #pprint(url)
 
-                        if self.depth + 1 <= self.max_depth and (not (url in self.file_object.scanned_urls)):
+                        if self.depth + 1 <= self.max_depth and self.file_object.record_url(url):
                             # If the url doesnt exceed 2 depth and isn't already scanned
                             #pprint(url)
                             self.queue.put((complete_domain(crop_fragment_identifier(url), self.current_url) ,
@@ -140,8 +147,3 @@ class Worker(threading.Thread):
 
         except Exception:
             logging.exception('Worker-Exception-work()')
-
-if __name__ == '__main__':
-    crawl = Crawler(2)
-    crawl.add_website("http://koslib.com/")
-    crawl.begin()

@@ -1,27 +1,28 @@
 # -*- coding: utf-8 -*-
 import logging
+
 from datetime import datetime, timedelta
 from pymongo import MongoClient
 
+from engine.config import fetch_options
 
 class pymongo_recorder(object):
 
     def __init__(self, max_pool):
-        CLIENT = MongoClient("127.0.0.1", 27017)
-        self.lists = CLIENT['test']['lists']
-        self.search = CLIENT['test']['search']
-        self.scanned_urls = []
+        self.options = fetch_options()
+        CLIENT = MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
+        self.lists = CLIENT[self.options['mongo']['database']][self.options['mongo']['index_list']]
+        self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['retr_list']]
 
     def record_url(self, url):
         urls = self.lists.find({"url": str(url)})
         if urls.count() == 0:
             # If a url is not recorded, then we can crawl it
-            self.scanned_urls.append(str(url))
             return True
         if urls.count() == 1:
             time_passed = datetime.now() - urls[0]["time_scanned"] # get how much time
             # passed since this url was last scanned
-            if time_passed > timedelta(days=5): # if it is longer than 5 days
+            if time_passed > timedelta(days=int(self.options['mongo']['old_urls'])):
                 return True
 
         return False

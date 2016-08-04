@@ -14,6 +14,8 @@ from engine.config import fetch_options
 from engine.utils import http_checker
 from engine.filters import gather_words_around_search_word as gwasw
 
+from handlers.autocompletehandler import AutoCompleteHandler
+
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
 OPTIONS = fetch_options()
 crawl = crawler.Crawler(4, OPTIONS["crawler"]["depth"])
@@ -85,16 +87,6 @@ class SearchHandler(tornado.web.RequestHandler):
                 self.write(response)
 
 
-class AutoCompleteHandler(tornado.web.RequestHandler):
-    def post(self):
-        initial = "(.*%s.*)" % (self.get_argument('search_string'))
-        for match in SEARCH.find({"search": { '$regex': initial}}):
-            response = """
-            <li class="list-group-item"><a onClick="a_onClick(\'%s\')">%s</a></li>
-            """ % (esc.xhtml_escape(match["search"]), esc.xhtml_escape(match["search"]))
-            self.write(response)
-
-
 class CrawlHandler(tornado.web.RequestHandler):
 
     def get(self):
@@ -110,7 +102,7 @@ class CrawlHandler(tornado.web.RequestHandler):
 application = tornado.web.Application(
     [
     (r"/", SearchHandler),
-    (r"/autocomplete", AutoCompleteHandler),
+    (r"/autocomplete", AutoCompleteHandler, dict(search=SEARCH)),
     (r"/crawl", CrawlHandler)
     ],
     serve_traceback=True,
@@ -119,5 +111,7 @@ application = tornado.web.Application(
     )
 
 if __name__ == "__main__":
-    application.listen(8000)
+
+    application.listen(int(OPTIONS['app']['port']))
+    print("[*] Listening :", OPTIONS['app']['port'])
     tornado.ioloop.IOLoop.instance().start()
