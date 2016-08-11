@@ -15,14 +15,10 @@ from pymongo import MongoClient
 from engine.filters import complete_domain, crop_fragment_identifier
 import engine.config as config
 import engine.storage as storage
-global SCANNED_ROBOTS
-SCANNED_ROBOTS = {}
-
 
 url_regex = re.compile(r'href=[\'"]?([^\'" >]+)', re.VERBOSE | re.MULTILINE)
 split_regex = re.compile(r'\s+')
 escape_regex = re.compile('(\\n|\\t|\\r)')
-
 
 
 class MyHTMLParser(HTMLParser):
@@ -52,6 +48,9 @@ class Crawler(object):
         self.max_depth = max_depth
         # Create a data storage for the threads to use
         self.file_object = storage.pymongo_recorder(self.max_threads)
+
+    def get_storage(self):
+        return self.file_object
 
     def add_website(self, website_url):
         self.queue.put((website_url, 0)) # Add a url in the queue

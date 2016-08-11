@@ -14,6 +14,13 @@ class pymongo_recorder(object):
         self.lists = CLIENT[self.options['mongo']['database']][self.options['mongo']['index_list']]
         self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['retr_list']]
 
+    def get_lists_collection(self):
+        return self.lists
+
+    def get_search_collection(self):
+        return self.search
+
+
     def record_url(self, url):
         urls = self.lists.find({"url": str(url)})
         if urls.count() == 0:

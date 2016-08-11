@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import tornado.web
 import logging
-
+import tornado.escape as esc
 
 class AutoCompleteHandler(tornado.web.RequestHandler):
     def initialize(self, search):
