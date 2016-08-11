@@ -5,7 +5,7 @@ import tornado.web
 import tornado.escape as esc
 import engine.config
 
-from engine.utils import http_checker
+from engine.utils import http_checker, construct_regex
 from engine.filters import gather_words_around_search_word as gwasw
 
 class SearchHandler(tornado.web.RequestHandler):
@@ -26,20 +26,15 @@ class SearchHandler(tornado.web.RequestHandler):
         # Clean up search from useless spaces
         search_string = re.split(re.compile(r'\s+') , self.get_argument('search_string').lower())
 
-        # Create a string like this (?=.*\bjack\b)(?=.*\bjames\b).*
-        # Which is used for searching in any order for as many words
-
-        initial = "".join(r"(?=.*\b{0}\b)".format(part) for part in search_string)
-        initial = r"({0}.*)".format(initial)
-        # Fetch results from mongodb
-        print(initial)
         matched_results = [
             {
                 # Get the main part of the crawled webpage
                 'content': gwasw(match['data'], search_string[0], 90),
                 # Get the url
                 'url': http_checker(match['url'])
-            } for match in self.database.get_lists_collection().find({"data": { '$regex': initial}}) # Search mongodb
+            } for match in self.database.get_lists_collection().find({
+                "data": { '$regex': construct_regex(search_string)}
+            }) # Search mongodb
         ]
         if len(matched_results) > 0:
             self.record_search(self.get_argument('search_string'))

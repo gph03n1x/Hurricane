@@ -9,22 +9,22 @@ import tornado.web
 import engine.crawler as crawler
 
 from engine.config import fetch_options
-from handlers.autocompletehandler import AutoCompleteHandler
-from handlers.crawlhandler import CrawlHandler
-from handlers.searchhandler import SearchHandler
+from handlers.suggestions import SuggestionsHandler
+from handlers.status import StatusHandler
+from handlers.search import SearchHandler
 
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
+
 OPTIONS = fetch_options()
 
-crawl = crawler.Crawler(4, OPTIONS["crawler"]["depth"])
+crawl = crawler.Crawler(int(OPTIONS["crawler"]["threads"]), OPTIONS["crawler"]["depth"])
 crawl.begin()
-
 
 application = tornado.web.Application(
     [
     (r"/", SearchHandler, dict(database=crawl.get_storage())),
-    (r"/autocomplete", AutoCompleteHandler, dict(search=crawl.get_storage().get_search_collection())),
-    (r"/crawl", CrawlHandler, dict(crawler=crawl))
+    (r"/suggest", SuggestionsHandler, dict(search=crawl.get_storage().get_search_collection())),
+    (r"/status", StatusHandler, dict(crawler=crawl))
     ],
     serve_traceback=True,
     template_path=os.path.join(os.path.dirname(__file__), "templates"),

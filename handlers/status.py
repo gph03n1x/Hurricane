@@ -3,7 +3,7 @@ import tornado.web
 import logging
 
 
-class CrawlHandler(tornado.web.RequestHandler):
+class StatusHandler(tornado.web.RequestHandler):
     def initialize(self, crawler):
         self.crawler = crawler
 
@@ -14,4 +14,4 @@ class CrawlHandler(tornado.web.RequestHandler):
     def post(self):
         self.get_argument('search_string')
         self.crawler.add_website(self.get_argument('search_string'))
-        self.redirect("/crawl")
+        self.redirect("/status")

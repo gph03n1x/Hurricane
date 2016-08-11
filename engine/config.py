@@ -3,19 +3,9 @@ import re
 import os
 import configparser
 
-regex_patterns = {
-    'split_regex': re.compile(r'\s+'),
-    'escape_regex': re.compile('(\\n|\\t|\\r)'),
-    'url_regex': re.compile(r'href=[\'"]?([^\'" >]+)', re.VERBOSE | re.MULTILINE),
-    'body_contents': re.compile(r'<body>(.+)</body>', re.VERBOSE | re.MULTILINE)
-}
-
-def get_pattern(pattern):
-    return regex_patterns[pattern]
 
 def fetch_options():
     options = {}
-
     config = configparser.RawConfigParser()
 
     if __name__ == '__main__':
@@ -23,13 +13,15 @@ def fetch_options():
     else:
         config.read('hurricane.cfg')
 
-
     for sect in config.sections():
         options[sect] = {}
         for option in config.options(sect):
             options[sect][option] = config.get(sect, option)
+            if sect == "regexes":
+                options[sect][option] = re.compile(options[sect][option], re.VERBOSE | re.MULTILINE)
 
     return options
+
 """
 for f in os.listdir('stop-words'):
     print f

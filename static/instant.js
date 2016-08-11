@@ -3,7 +3,7 @@ $( "#search_string" ).on('input', function() {
     var search_input = $( "#search_string" ).val();
     setTimeout(make_post, 800, search_input);
 
-    $.post( "/autocomplete", { search_string: search_input}, function( data ) {
+    $.post( "/suggest", { search_string: search_input}, function( data ) {
         $( "#autocomplete" ).empty();
         $( "#autocomplete" ).append( data );
     });

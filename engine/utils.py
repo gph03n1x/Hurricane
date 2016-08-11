@@ -2,6 +2,9 @@
 import os
 import logging
 
+def construct_regex(search_string):
+    regex_string = "".join(r"(?=.*\b{0}\b)".format(part) for part in search_string)
+    return r"({0}.*)".format(regex_string)
 
 def http_checker(url):
     if ("http://" in url) or ("https://" in url):

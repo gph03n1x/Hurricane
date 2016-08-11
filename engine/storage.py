@@ -10,9 +10,15 @@ class pymongo_recorder(object):
 
     def __init__(self, max_pool):
         self.options = fetch_options()
-        CLIENT = MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
-        self.lists = CLIENT[self.options['mongo']['database']][self.options['mongo']['index_list']]
-        self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['retr_list']]
+        try:
+            CLIENT = MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
+            self.lists = CLIENT[self.options['mongo']['database']][self.options['mongo']['data-collection']]
+            self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['searches-colllection']]
+        except Exception as mongo_error:
+            print("[-] Database Error , exitting ...")
+            logging.exception("pymongo_recorder::__init__")
+            exit()
+
 
     def get_lists_collection(self):
         return self.lists
@@ -29,7 +35,7 @@ class pymongo_recorder(object):
         if urls.count() == 1:
             time_passed = datetime.now() - urls[0]["time_scanned"] # get how much time
             # passed since this url was last scanned
-            if time_passed > timedelta(days=int(self.options['mongo']['old_urls'])):
+            if time_passed > timedelta(days=int(self.options['mongo']['old-urls'])):
                 return True
 
         return False

@@ -7,22 +7,24 @@ import threading
 import urllib.request
 import urllib.error
 import multiprocessing
+
 from time import sleep
 from datetime import datetime
 from pprint import pprint
 from html.parser import HTMLParser
+
+from bs4 import BeautifulSoup
 from pymongo import MongoClient
+
 from engine.filters import complete_domain, crop_fragment_identifier
-import engine.config as config
+
+from engine.config import fetch_options
 import engine.storage as storage
 
-url_regex = re.compile(r'href=[\'"]?([^\'" >]+)', re.VERBOSE | re.MULTILINE)
-split_regex = re.compile(r'\s+')
-escape_regex = re.compile('(\\n|\\t|\\r)')
 
 
 class MyHTMLParser(HTMLParser):
-
+    # should extract data only from <p, <h*, <strong, <em, <title, <a,
     def reset_list(self):
         # Creates an empty list and locks it
         self.data_list = []
@@ -71,9 +73,14 @@ class Worker(threading.Thread):
         self.file_object = file_object # file_object is the storage the crawler
                                        # will use
         self.parser = MyHTMLParser()
+
         with open("stop-words/stop-words-english1.txt") as stop_words_file:
             self.stop_words = stop_words_file.read().split("\n")
+
         self.current_url = "Idle"
+
+        self.options = fetch_options()
+
     def run(self):
         while True:
             try:
@@ -84,7 +91,7 @@ class Worker(threading.Thread):
                     self.current_url = "Idle"
                     sleep(1) # Let the thread go idle until a new item comes up
             except Exception:
-                logging.exception('Worker-Exception-run()')
+                logging.exception('Worker::run')
 
     def work(self, queue_item):
         # queue_item[0] is the url, queue_item[1] is the depth
@@ -101,13 +108,12 @@ class Worker(threading.Thread):
                     self.req = urllib.request.Request(self.current_url,
                      headers={'User-Agent': 'Hurricane/1.1'})
                     self.url = urllib.request.urlopen(self.req)
-                except urllib.error.URLError:
-                    print("[-] UrlError")
+                except urllib.error.URLError as url_error:
+                    logging.exception("Worker::work::try")
                 except urllib.error.HTTPError:
                     if not (len(queue_item) > 2):
                         self.queue.put((self.current_url, self.depth, 1))
                 else:
-                    print("[+] Opened successfully")
                     self.data = self.url.read()
                     self.encoding = self.url.headers.get_content_charset()
                     if self.encoding is None:
@@ -116,7 +122,7 @@ class Worker(threading.Thread):
 
                     self.data = self.data.decode(self.encoding) # Fetch the data from the webpage
 
-                    self.urls = re.findall(url_regex, self.data) # Fetch all urls from the webpage
+                    self.urls = re.findall(self.options['regexes']['url'], self.data) # Fetch all urls from the webpage
 
                     try: # If the webpage has a charset set
                         self.parser.feed(self.data) # Parse a decoded webpage
@@ -126,12 +132,10 @@ class Worker(threading.Thread):
 
                     self.data = "".join(self.parser.data_list) # get all the data in a long string
 
-                    self.data = re.sub(escape_regex , "", self.data) # Remove unnecessary escape characters
-                    self.data = re.sub(split_regex , " ", self.data) # Replace html spaces with only one
-                    print("[*] Waiting ")
+                    self.data = re.sub(self.options['regexes']['escape'] , "", self.data) # Remove unnecessary escape characters
+                    self.data = re.sub(self.options['regexes']['split'] , " ", self.data) # Replace html spaces with only one
                     for word in self.stop_words:
                         self.data = self.data.replace(" "+word+" ", " ")
-                    print("[*] Done ")
                     self.file_object.record_db(self.data.lower(), self.current_url) # Record the results
 
                     # Add the urls found in the webpage
@@ -145,4 +149,4 @@ class Worker(threading.Thread):
                                             self.depth + 1)) # Add the url to the queue and increase the depth
 
         except Exception:
-            logging.exception('Worker-Exception-work()')
+            logging.exception('Worker::work')
