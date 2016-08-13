@@ -1,5 +1,5 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 import re
 import string
 import os.path
@@ -7,7 +7,6 @@ import logging
 import tornado.ioloop
 import tornado.web
 import engine.crawler as crawler
-
 from engine.config import fetch_options
 from handlers.suggestions import SuggestionsHandler
 from handlers.status import StatusHandler
@@ -31,8 +30,8 @@ application = tornado.web.Application(
     static_path=os.path.join(os.path.dirname(__file__), "static"),
     )
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     application.listen(int(OPTIONS['app']['port']))
     print("[*] Listening :", OPTIONS['app']['port'])
     tornado.ioloop.IOLoop.instance().start()

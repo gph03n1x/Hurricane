@@ -1,15 +1,15 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import re
 import logging
 import tornado.web
 import tornado.escape as esc
 import engine.config
-
 from engine.utils import http_checker, construct_regex
 from engine.filters import gather_words_around_search_word as gwasw
 
-class SearchHandler(tornado.web.RequestHandler):
 
+class SearchHandler(tornado.web.RequestHandler):
     def initialize(self, database):
         self.database = database
 

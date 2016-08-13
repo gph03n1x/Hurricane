@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import re
 import tornado.web
 import logging
 import tornado.escape as esc

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
 import logging
@@ -15,7 +16,7 @@ def http_checker(url):
         return ("http://" + url)
 
 
-def myLogger(name):
+def my_logger(name):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     handler = logging.FileHandler(os.getcwd() + '/' + name + '.tmp')

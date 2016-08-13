@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import urllib.error
 import urllib.robotparser
@@ -26,8 +27,6 @@ def crop_fragment_identifier(url_path):
         return url_path.split("#")[0]
     return url_path
 
-def is_media():
-    pass
 
 def complete_domain(url_path, current_domain):
     try:

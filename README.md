@@ -7,6 +7,7 @@ A python search engine + crawler with tornado
 
 * Tornado
 * Pymongo
+* BeautifulSoup4
 
 ### Running
 

@@ -1,19 +1,18 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
-
 from datetime import datetime, timedelta
 from pymongo import MongoClient
-
 from engine.config import fetch_options
 
-class pymongo_recorder(object):
 
-    def __init__(self, max_pool):
+class PymongoRecorder(object):
+    def __init__(self):
         self.options = fetch_options()
         try:
             CLIENT = MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
             self.lists = CLIENT[self.options['mongo']['database']][self.options['mongo']['data-collection']]
-            self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['searches-colllection']]
+            self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['searches-collection']]
         except Exception as mongo_error:
             print("[-] Database Error , exitting ...")
             logging.exception("pymongo_recorder::__init__")

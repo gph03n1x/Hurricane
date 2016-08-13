@@ -1,5 +1,5 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 import re
 import string
 import logging
@@ -7,52 +7,25 @@ import threading
 import urllib.request
 import urllib.error
 import multiprocessing
-
 from time import sleep
-from datetime import datetime
-from pprint import pprint
-from html.parser import HTMLParser
-
-from bs4 import BeautifulSoup
 from pymongo import MongoClient
-
 from engine.filters import complete_domain, crop_fragment_identifier
-
 from engine.config import fetch_options
-import engine.storage as storage
-
-
-
-class MyHTMLParser(HTMLParser):
-    # should extract data only from <p, <h*, <strong, <em, <title, <a,
-    def reset_list(self):
-        # Creates an empty list and locks it
-        self.data_list = []
-        self.lock = True
-
-    def handle_starttag(self, tag, attrs):
-        if tag == "body":
-            # Signal that is should start adding to the list , the following data
-            self.lock = False
-
-    def handle_data(self, data):
-        if self.lock is False:
-            # Adds data to the list since it found the <body> tag
-            self.data_list.append(data)
+from engine.parser import Parser
+from engine.storage import PymongoRecorder
 
 
 class Crawler(object):
-
     def __init__(self, max_threads, max_depth):
         self.queue = multiprocessing.Queue()
         self.threads = {}
         self.max_threads = max_threads
         self.max_depth = max_depth
-        # Create a data storage for the threads to use
-        self.file_object = storage.pymongo_recorder(self.max_threads)
+        self.storage = PymongoRecorder()
+        self.parser = Parser()
 
     def get_storage(self):
-        return self.file_object
+        return self.storage
 
     def add_website(self, website_url):
         self.queue.put((website_url, 0)) # Add a url in the queue
@@ -60,26 +33,33 @@ class Crawler(object):
     def begin(self):
         for thread in range(0, self.max_threads):
             # Spawn and start the threads
-            self.threads[thread] = Worker(self.max_depth, self.queue, self.file_object)
+            self.threads[thread] = Worker(self.max_depth, self.queue, self.storage, self.parser)
             self.threads[thread].start()
 
 
 class Worker(threading.Thread):
-
-    def __init__(self, max_depth, queue, file_object):
+    def __init__(self, max_depth, queue, storage, parser):
         super(Worker, self).__init__()
         self.queue = queue
         self.max_depth = int(max_depth)
-        self.file_object = file_object # file_object is the storage the crawler
+        self.storage = storage # storage is the storage the crawler
                                        # will use
-        self.parser = MyHTMLParser()
-
+        self.parser = parser
         with open("stop-words/stop-words-english1.txt") as stop_words_file:
             self.stop_words = stop_words_file.read().split("\n")
 
         self.current_url = "Idle"
 
         self.options = fetch_options()
+
+    def should_ignore(self, url):
+        # Find a better method for staff like
+        # static/greyindex.css?v=893e07cd07891c47f58b0a256b82ac7b
+        for extension in self.options['crawler']['ignore-extensions'].split(','):
+            if url.endswith("."+extension):
+                return True
+        return False
+
 
     def run(self):
         while True:
@@ -97,13 +77,12 @@ class Worker(threading.Thread):
         # queue_item[0] is the url, queue_item[1] is the depth
         self.current_url = queue_item[0]
         self.depth = queue_item[1]
-        #logging.info(str(queue_item))
+        logging.info(str(queue_item))
         if len(queue_item) > 2:
             sleep(queue_item[2])
 
         try:
-            if self.file_object.record_url(self.current_url):
-                self.parser.reset_list()
+            if self.storage.record_url(self.current_url):
                 try:
                     self.req = urllib.request.Request(self.current_url,
                      headers={'User-Agent': 'Hurricane/1.1'})
@@ -125,26 +104,20 @@ class Worker(threading.Thread):
                     self.urls = re.findall(self.options['regexes']['url'], self.data) # Fetch all urls from the webpage
 
                     try: # If the webpage has a charset set
-                        self.parser.feed(self.data) # Parse a decoded webpage
+                        self.data = self.parser.parse_page(self.data) # Parse a decoded webpage
                     except (TypeError, UnicodeDecodeError): # If an exception is raised
-                        self.parser.feed(self.data.decode('utf-8')) # parsing with utf-8 decoded
+                        self.data = self.parser.parse_page(self.data.decode('utf-8')) # parsing with utf-8 decoded
 
-
-                    self.data = "".join(self.parser.data_list) # get all the data in a long string
-
-                    self.data = re.sub(self.options['regexes']['escape'] , "", self.data) # Remove unnecessary escape characters
-                    self.data = re.sub(self.options['regexes']['split'] , " ", self.data) # Replace html spaces with only one
-                    for word in self.stop_words:
-                        self.data = self.data.replace(" "+word+" ", " ")
-                    self.file_object.record_db(self.data.lower(), self.current_url) # Record the results
+                    self.storage.record_db(self.data.lower(), self.current_url) # Record the results
 
                     # Add the urls found in the webpage
                     for url in self.urls:
                         #pprint(url)
+                        if self.should_ignore(url):
+                            continue
 
-                        if self.depth + 1 <= self.max_depth and self.file_object.record_url(url):
+                        if self.depth + 1 <= self.max_depth and self.storage.record_url(url):
                             # If the url doesnt exceed 2 depth and isn't already scanned
-                            #pprint(url)
                             self.queue.put((complete_domain(crop_fragment_identifier(url), self.current_url) ,
                                             self.depth + 1)) # Add the url to the queue and increase the depth
 
