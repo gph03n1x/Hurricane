@@ -102,7 +102,7 @@ class Worker(threading.Thread):
                     self.data = self.data.decode(self.encoding) # Fetch the data from the webpage
 
                     self.urls = re.findall(self.options['regexes']['url'], self.data) # Fetch all urls from the webpage
-
+                    #self.urls = filter(None, self.urls)
                     try: # If the webpage has a charset set
                         self.data = self.parser.parse_page(self.data) # Parse a decoded webpage
                     except (TypeError, UnicodeDecodeError): # If an exception is raised
@@ -112,13 +112,14 @@ class Worker(threading.Thread):
 
                     # Add the urls found in the webpage
                     for url in self.urls:
-                        #pprint(url)
-                        if self.should_ignore(url):
+
+                        fixed_url = complete_domain(crop_fragment_identifier(url), self.current_url)
+                        if self.should_ignore(fixed_url) or len(fixed_url) < 1:
                             continue
 
-                        if self.depth + 1 <= self.max_depth and self.storage.record_url(url):
+                        if self.depth + 1 <= self.max_depth and self.storage.record_url(fixed_url):
                             # If the url doesnt exceed 2 depth and isn't already scanned
-                            self.queue.put((complete_domain(crop_fragment_identifier(url), self.current_url) ,
+                            self.queue.put((fixed_url ,
                                             self.depth + 1)) # Add the url to the queue and increase the depth
 
         except Exception:
