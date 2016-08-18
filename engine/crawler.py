@@ -9,7 +9,7 @@ import urllib.error
 import multiprocessing
 from time import sleep
 from pymongo import MongoClient
-from engine.filters import complete_domain, crop_fragment_identifier
+from engine.filters import complete_domain, crop_fragment_identifier, url_validator
 from engine.config import fetch_options
 from engine.parser import Parser
 from engine.storage import PymongoRecorder
@@ -104,17 +104,23 @@ class Worker(threading.Thread):
                     self.urls = re.findall(self.options['regexes']['url'], self.data) # Fetch all urls from the webpage
                     #self.urls = filter(None, self.urls)
                     try: # If the webpage has a charset set
-                        self.data = self.parser.parse_page(self.data) # Parse a decoded webpage
+                        self.data = self.parser.parse_page(self.data.lower()) # Parse a decoded webpage
                     except (TypeError, UnicodeDecodeError): # If an exception is raised
-                        self.data = self.parser.parse_page(self.data.decode('utf-8')) # parsing with utf-8 decoded
+                        self.data = self.parser.parse_page(self.data.decode('utf-8').lower()) # parsing with utf-8 decoded
 
-                    self.storage.record_db(self.data.lower(), self.current_url) # Record the results
+                    self.storage.record_db(self.data, self.current_url) # Record the results
 
                     # Add the urls found in the webpage
                     for url in self.urls:
 
                         fixed_url = complete_domain(crop_fragment_identifier(url), self.current_url)
+                        logging.debug(str((fixed_url,url_validator(fixed_url),self.should_ignore(fixed_url))))
                         if self.should_ignore(fixed_url) or len(fixed_url) < 1:
+                            continue
+
+
+
+                        if not url_validator(fixed_url):
                             continue
 
                         if self.depth + 1 <= self.max_depth and self.storage.record_url(fixed_url):

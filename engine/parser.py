@@ -19,7 +19,7 @@ class Parser(object):
         # Remove unnecessary characters
         page = re.sub(self.options['regexes']['escape'] , "", page)
         page = re.sub(self.options['regexes']['split'] , " ", page)
-        page = BeautifulSoup(page).text
+        page = BeautifulSoup(page, "html.parser").text
         for word in self.stop_words:
             page = page.replace(" "+word+" ", " ")
         page = re.sub(self.options['regexes']['split'] , " ", page)

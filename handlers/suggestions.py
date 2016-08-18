@@ -4,7 +4,8 @@ import re
 import tornado.web
 import logging
 import tornado.escape as esc
-from engine.utils import http_checker, construct_regex
+from engine.utils import construct_regex
+from engine.filters import http_checker
 
 
 class SuggestionsHandler(tornado.web.RequestHandler):

@@ -5,7 +5,8 @@ import logging
 import tornado.web
 import tornado.escape as esc
 import engine.config
-from engine.utils import http_checker, construct_regex
+from engine.utils import construct_regex
+from engine.filters import http_checker
 from engine.filters import gather_words_around_search_word as gwasw
 
 
