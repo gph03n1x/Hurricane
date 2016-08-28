@@ -3,6 +3,7 @@
 import tornado.web
 import logging
 from engine.filters import url_validator
+from urllib.parse import unquote
 
 class StatusHandler(tornado.web.RequestHandler):
     def initialize(self, crawler):
@@ -10,7 +11,12 @@ class StatusHandler(tornado.web.RequestHandler):
 
     def get(self):
         urls = [self.crawler.threads[thread].current_url for thread in self.crawler.threads]
-        self.render("crawl.html", results=urls)
+        urls_robots = []
+        for thread in self.crawler.threads:
+            urls_robots += [
+                [unquote(domain) for domain in self.crawler.threads[thread].robots.keys()]
+                ]
+        self.render("crawl.html", results=urls, robots=urls_robots)
 
     def post(self):
         if url_validator(self.get_argument('search_string')):

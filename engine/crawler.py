@@ -49,6 +49,7 @@ class Worker(threading.Thread):
         self.parser = parser # page parser
         self.storage = storage # storage for storing data
         self.options = fetch_options()
+        self.robots = {} # {"domain":[robotparser, urls since last]}
 
 
     def should_ignore(self, url):
@@ -61,15 +62,25 @@ class Worker(threading.Thread):
 
 
     def can_record(self):
-        # TODO: bad method of fetching robots because we fetch them each time.
-        self.robots = gather_robots_txt(self.current_url)
-        if self.robots:
-            return self.robots.can_fetch(
+        # store in a dict or array and after a number of urls remove it
+        domain = url_to_domain(self.current_url)
+        if not domain in self.robots:
+            self.robots[domain] = [gather_robots_txt(domain), 0]
+
+        for robot_domain in self.robots:
+            if robot_domain == domain:
+                self.robots[robot_domain][1] = 0
+                continue
+            self.robots[robot_domain][1] += 1
+            if self.robots[robot_domain][1] > int(self.options['crawler']['unload-robots']):
+                del self.robots[robot_domain]
+
+        if self.robots[domain][0]:
+            return self.robots[domain][0].can_fetch(
                 self.options['crawler']['user-agent-robots'],
                 self.current_url
             )
-        else:
-            return True
+        return True
 
 
     def run(self):

@@ -6,8 +6,7 @@ import urllib.robotparser
 from urllib.parse import urlparse, urljoin
 
 
-def gather_robots_txt(url):
-    domain = url_to_domain(url)
+def gather_robots_txt(domain):
     robots = http_checker(domain) + "/robots.txt"
     try:
         # logging.debug(url + "#" +  domain + "#" + robots)
@@ -44,7 +43,7 @@ def complete_domain(url_path, current_url):
     try:
         if not urlparse(url_path).netloc:
             current_domain = url_to_domain(current_url)
-            return "{0}{1}".format(http_checker(current_domain), url_path)
+            url_path = urljoin(http_checker(current_domain), url_path)
     except IndexError:
         pass
     return url_path
