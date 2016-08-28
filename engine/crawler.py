@@ -64,20 +64,17 @@ class Worker(threading.Thread):
     def can_record(self):
         # store in a dict or array and after a number of urls remove it
         domain = url_to_domain(self.current_url)
-        inactive_domains = []
+        domains = list(self.robots.keys())
         if not domain in self.robots:
             self.robots[domain] = [gather_robots_txt(domain), 0]
 
-        for robot_domain in self.robots:
+        for robot_domain in domains:
             if robot_domain == domain:
                 self.robots[robot_domain][1] = 0
                 continue
             self.robots[robot_domain][1] += 1
             if self.robots[robot_domain][1] > int(self.options['crawler']['unload-robots']):
-                inactive_domains.append(robot_domain)
-
-        for domain in inactive_domains:
-            del self.robots[robot_domain]
+                del self.robots[robot_domain]
 
         if self.robots[domain][0]:
             return self.robots[domain][0].can_fetch(
