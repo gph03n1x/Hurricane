@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import tornado.web
 import logging
-
+from engine.filters import url_validator
 
 class StatusHandler(tornado.web.RequestHandler):
     def initialize(self, crawler):
@@ -13,6 +13,6 @@ class StatusHandler(tornado.web.RequestHandler):
         self.render("crawl.html", results=urls)
 
     def post(self):
-        self.get_argument('search_string')
-        self.crawler.add_website(self.get_argument('search_string'))
+        if url_validator(self.get_argument('search_string')):
+            self.crawler.add_website(self.get_argument('search_string'))
         self.redirect("/status")

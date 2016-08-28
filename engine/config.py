@@ -5,6 +5,10 @@ import os
 import configparser
 
 
+def validate_config():
+    pass
+
+
 def fetch_options():
     options = {}
     config = configparser.RawConfigParser()

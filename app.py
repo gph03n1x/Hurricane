@@ -12,6 +12,7 @@ from handlers.suggestions import SuggestionsHandler
 from handlers.status import StatusHandler
 from handlers.search import SearchHandler
 
+# TODO: separate tornado and crawler logs
 logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
 OPTIONS = fetch_options()

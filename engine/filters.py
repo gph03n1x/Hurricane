@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import logging
 import urllib.error
 import urllib.robotparser
 from urllib.parse import urlparse, urljoin
 
 
-def gather_robots_txt(domain):
-    domain = url_to_domain(domain)
+def gather_robots_txt(url):
+    domain = url_to_domain(url)
     robots = http_checker(domain) + "/robots.txt"
     try:
-        rp = urllib.robotparser.RobotFileParser()
-        rp.set_url(robots)
-        rp.read()
+        # logging.debug(url + "#" +  domain + "#" + robots)
+        robot_parser = urllib.robotparser.RobotFileParser()
+        robot_parser.set_url(robots)
+        robot_parser.read()
     except urllib.error.HTTPError:
         return None
     else:
-        return rp
+        return robot_parser
 
 
 def gather_words_around_search_word(given_description, given_word, length):
@@ -40,7 +42,7 @@ def crop_fragment_identifier(url_path):
 
 def complete_domain(url_path, current_url):
     try:
-        if url_path[0] == "/":
+        if not urlparse(url_path).netloc:
             current_domain = url_to_domain(current_url)
             return "{0}{1}".format(http_checker(current_domain), url_path)
     except IndexError:
@@ -49,7 +51,7 @@ def complete_domain(url_path, current_url):
 
 
 def http_checker(url):
-    return urljoin("http://", url)
+    return urljoin("http://", url).replace("///", "//", 1)
 
 
 def url_to_domain(url_path):
