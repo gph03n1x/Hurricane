@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import sys
+if len(sys.argv) > 1:
+    import tests
+    sys.exit(0)
+
 import re
 import string
 import os.path
