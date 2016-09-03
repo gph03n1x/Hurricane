@@ -19,6 +19,7 @@ class Parser(object):
         # Remove unnecessary characters
         page = re.sub(self.options['regexes']['escape'] , "", page)
         page = re.sub(self.options['regexes']['split'] , " ", page)
+        # TODO: improve it in order to not store css and js
         page = BeautifulSoup(page, "html.parser").text
         for word in self.stop_words:
             page = page.replace(" "+word+" ", " ")
