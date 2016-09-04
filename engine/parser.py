@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
+import logging
 from bs4 import BeautifulSoup
 from engine.config import fetch_options
 
 
 class Parser(object):
-    def __init__(self):
+    def __init__(self, logger):
+        self.logger = logger
         self.options = fetch_options()
         self.stop_words = []
         for stop_word_file in self.options['parser']['stop-word-files'].split(','):
@@ -14,6 +16,7 @@ class Parser(object):
                 self.stop_words += stop_words_file.read().split("\n")
         self.stop_words = list(set(self.stop_words))
         self.stop_words = filter(None, self.stop_words)
+
 
     def parse_page(self, page):
         # Remove unnecessary characters

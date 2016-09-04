@@ -9,9 +9,9 @@ def construct_regex(search_string):
     return r"({0}.*)".format(regex_string)
 
 
-def my_logger(name):
+def construct_logger(name):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(os.getcwd() + '/' + name + '.tmp')
+    handler = logging.FileHandler(os.getcwd() + '/' + name + '.txt')
     logger.addHandler(handler)
     return logger

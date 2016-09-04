@@ -4,7 +4,7 @@ import sys
 if len(sys.argv) > 1:
     import tests
     sys.exit(0)
-
+import os
 import re
 import string
 import os.path
@@ -17,8 +17,12 @@ from handlers.suggestions import SuggestionsHandler
 from handlers.status import StatusHandler
 from handlers.search import SearchHandler
 
+
+if not os.path.exists("data/logs"):
+    os.mkdir("data/logs")
+
 # TODO: separate tornado and crawler logs
-logging.basicConfig(filename='error.log', level=logging.DEBUG)
+# logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
 OPTIONS = fetch_options()
 

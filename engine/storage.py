@@ -7,15 +7,16 @@ from engine.config import fetch_options
 
 
 class PymongoRecorder(object):
-    def __init__(self):
+    def __init__(self, logger):
         self.options = fetch_options()
+        self.logger = logger
         try:
             CLIENT = MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
             self.lists = CLIENT[self.options['mongo']['database']][self.options['mongo']['data-collection']]
             self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['searches-collection']]
         except Exception as mongo_error:
             print("[-] Database Error , exitting ...")
-            logging.exception("pymongo_recorder::__init__")
+            self.logger.exception("pymongo_recorder::__init__")
             exit()
 
 
@@ -57,4 +58,4 @@ class PymongoRecorder(object):
                         }
                     }, upsert=False)
         except Exception:
-            logging.exception('Recorder-mongo-db')
+            self.logger.exception('pymongo_recorder::record_db')
