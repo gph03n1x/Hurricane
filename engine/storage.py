@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from engine.config import fetch_options
 
 
-class PymongoRecorder(object):
+class MongoDBRecorder(object):
     def __init__(self, logger):
         self.options = fetch_options()
         self.logger = logger
@@ -16,15 +16,22 @@ class PymongoRecorder(object):
             self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['searches-collection']]
         except Exception as mongo_error:
             print("[-] Database Error , exitting ...")
-            self.logger.exception("pymongo_recorder::__init__")
+            self.logger.exception("mongo_recorder::__init__")
             exit()
 
 
     def get_lists_collection(self):
         return self.lists
 
+
     def get_search_collection(self):
         return self.search
+
+
+    def record_search(self, search_string):
+        record = {"search": search_string}
+        if self.search.find(record).count() == 0:
+            self.search.insert(record)
 
 
     def record_url(self, url):
@@ -37,8 +44,8 @@ class PymongoRecorder(object):
             # passed since this url was last scanned
             if time_passed > timedelta(days=int(self.options['mongo']['old-urls'])):
                 return True
-
         return False
+
 
     def record_db(self, data, url):
         # Update the database with url and data
@@ -58,4 +65,4 @@ class PymongoRecorder(object):
                         }
                     }, upsert=False)
         except Exception:
-            self.logger.exception('pymongo_recorder::record_db')
+            self.logger.exception('mongo_recorder::record_db')

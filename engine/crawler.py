@@ -11,8 +11,8 @@ from time import sleep
 from pymongo import MongoClient
 from engine.filters import *
 from engine.config import fetch_options
-from engine.parser import Parser
-from engine.storage import PymongoRecorder
+from engine.parser import PageParser
+from engine.storage import MongoDBRecorder
 from engine.utils import construct_logger
 
 
@@ -23,12 +23,16 @@ class Crawler(object):
         self.max_threads = max_threads
         self.max_depth = max_depth
         self.logger = construct_logger("data/logs/crawler")
-        self.storage = PymongoRecorder(self.logger)
-        self.parser = Parser(self.logger)
+        self.storage = MongoDBRecorder(self.logger)
+        self.parser = PageParser(self.logger)
 
 
     def get_storage(self):
         return self.storage
+
+
+    def get_logger(self):
+        return self.logger
 
 
     def add_website(self, website_url):

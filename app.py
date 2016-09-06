@@ -13,6 +13,7 @@ import tornado.ioloop
 import tornado.web
 import engine.crawler as crawler
 from engine.config import fetch_options
+from engine.parser import SearchParser
 from handlers.suggestions import SuggestionsHandler
 from handlers.status import StatusHandler
 from handlers.search import SearchHandler
@@ -21,7 +22,7 @@ from handlers.search import SearchHandler
 if not os.path.exists("data/logs"):
     os.mkdir("data/logs")
 
-# TODO: separate tornado and crawler logs
+# TODO: add handler logs
 # logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
 OPTIONS = fetch_options()
@@ -29,9 +30,12 @@ OPTIONS = fetch_options()
 crawl = crawler.Crawler(int(OPTIONS["crawler"]["threads"]), OPTIONS["crawler"]["depth"])
 crawl.begin()
 
+search_parser = SearchParser(crawl.get_logger())
+
+
 application = tornado.web.Application(
     [
-    (r"/", SearchHandler, dict(database=crawl.get_storage())),
+    (r"/", SearchHandler, dict(database=crawl.get_storage(),parser=search_parser)),
     (r"/suggest", SuggestionsHandler, dict(search=crawl.get_storage().get_search_collection())),
     (r"/status", StatusHandler, dict(crawler=crawl))
     ],

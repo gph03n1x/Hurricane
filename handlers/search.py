@@ -6,30 +6,31 @@ import tornado.web
 import tornado.escape as esc
 import engine.config
 from engine.utils import construct_regex
+from engine.parser import SearchParser
 from engine.filters import http_checker
 from engine.filters import gather_words_around_search_word as gwasw
 
 
 class SearchHandler(tornado.web.RequestHandler):
-    def initialize(self, database):
+    def initialize(self, database, parser):
         self.database = database
+        self.parser = parser
+
 
     def get(self):
         # Show an empty webpage ready to search
         self.render("main.html", results=[])
 
-    def record_search(self, search_string): # move it to storage.py
-        record = {"search": search_string}
-        if self.database.get_search_collection().find(record).count() == 0:
-            self.database.get_search_collection().insert(record)
 
     def post(self):
-        # Clean up search from useless spaces
-        search_string = re.split(re.compile(r'\s+') , self.get_argument('search_string').lower())
+        # TODO: Clean up search from useless spaces
+        search_string = self.parser.parse_input(self.get_argument('search_string').lower())
+        search_string = re.split(re.compile(r'\s+') , search_string)
 
         matched_results = [
             {
                 # Get the main part of the crawled webpage
+                # TODO: make gwasw configurable
                 'content': gwasw(match['data'], search_string[0], 90),
                 # Get the url
                 'url': http_checker(match['url'])
@@ -38,10 +39,10 @@ class SearchHandler(tornado.web.RequestHandler):
             }) # Search mongodb
         ]
         if len(matched_results) > 0:
-            self.record_search(self.get_argument('search_string'))
+            self.database.record_search(self.get_argument('search_string'))
         try:
             self.get_argument('nohtml')
-        except Exception:
+        except tornado.web.MissingArgumentError:
             self.render("main.html", results=matched_results)
         else:
             for result in matched_results:
