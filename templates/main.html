@@ -43,7 +43,7 @@
             <div class="panel panel-default">
               <div class="panel-heading"><a href={{ escape(result['url']) }}>{{ escape(result['url']) }}</a></div>
               <div class="panel-body">
-                {{ escape(result['content']) }}
+                {% raw result['content'] %}
               </div>
             </div>
     {% end %}

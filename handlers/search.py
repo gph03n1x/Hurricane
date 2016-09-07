@@ -22,6 +22,16 @@ class SearchHandler(tornado.web.RequestHandler):
         self.render("main.html", results=[])
 
 
+    def bold_(self, word):
+        return "{0}{1}{2}".format("<strong>",esc.xhtml_escape(word),"</strong>")
+
+
+    def escape_and_bold(self, data, search_string):
+        for word in search_string:
+            data = data.replace(word, self.bold_(word))
+        return data
+
+
     def post(self):
         # TODO: Clean up search from useless spaces
         search_string = self.parser.parse_input(self.get_argument('search_string').lower())
@@ -31,7 +41,10 @@ class SearchHandler(tornado.web.RequestHandler):
             {
                 # Get the main part of the crawled webpage
                 # TODO: make gwasw configurable
-                'content': gwasw(match['data'], search_string[0], 90),
+                'content': self.escape_and_bold(
+                    gwasw(match['data'], search_string, 25),
+                    search_string
+                ),
                 # Get the url
                 'url': http_checker(match['url'])
             } for match in self.database.get_lists_collection().find({

@@ -19,9 +19,20 @@ def gather_robots_txt(domain):
         return robot_parser
 
 
-def gather_words_around_search_word(given_description, given_word, length):
+def gather_chars_around_search_word(given_description, given_word, length):
     position = given_description.find(given_word)
     return given_description[position - length // 2 : position + length // 2]
+
+
+def gather_words_around_search_word(given_description, given_words, words_count):
+    description_words = given_description.split()
+    for given_word in given_words:
+        if given_word in description_words:
+            break
+    word_index = description_words.index(given_word)
+    start = max(0, word_index-words_count)
+    end = min(len(description_words), word_index+words_count)
+    return " ".join(description_words[start:end])
 
 
 def url_validator(url):
