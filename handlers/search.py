@@ -27,6 +27,7 @@ class SearchHandler(tornado.web.RequestHandler):
 
 
     def escape_and_bold(self, data, search_string):
+        data = esc.xhtml_escape(data)
         for word in search_string:
             data = data.replace(word, self.bold_(word))
         return data
