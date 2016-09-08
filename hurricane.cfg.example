@@ -29,10 +29,9 @@ ignore-extensions = css,js,png,jpeg,jpg,ico
 
 
 [regexes]
+# Do not mess with these except if you know what you are doing
 split = \s+
-escape = (\\n|\\t|\\r)'
-url = href=[\'"]?([^\'" >]+)
-body = <body>(.+)</body>
+escape = (\\n|\\t|\\r)
 
 [parser]
 # Files with stop words separated by comma inside the stop-words folders

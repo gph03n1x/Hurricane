@@ -28,11 +28,12 @@ def gather_words_around_search_word(given_description, given_words, words_count)
     description_words = given_description.split()
     for given_word in given_words:
         if given_word in description_words:
-            break
-    word_index = description_words.index(given_word)
-    start = max(0, word_index-words_count)
-    end = min(len(description_words), word_index+words_count)
-    return " ".join(description_words[start:end])
+            word_index = description_words.index(given_word)
+            start = max(0, word_index-words_count)
+            end = min(len(description_words), word_index+words_count)
+            return " ".join(description_words[start:end])
+    # TODO: return a random part of the description
+    return ""
 
 
 def url_validator(url):

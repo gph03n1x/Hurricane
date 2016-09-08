@@ -111,11 +111,14 @@ class Worker(threading.Thread):
         # queue_item[0] is the url, queue_item[1] is the depth
         self.current_url = queue_item[0]
         self.depth = queue_item[1]
-
         if len(queue_item) > 2:
             sleep(queue_item[2])
         try:
+            # self.logger.debug("Checking: " + self.current_url)
+            # self.logger.debug("Storage: " + str(self.storage.record_url(self.current_url)))
+            # self.logger.debug("Robots.txt: " + str(self.can_record()))
             if self.storage.record_url(self.current_url) and self.can_record():
+                print("Crawling: "+ self.current_url)
                 try:
                     self.req = urllib.request.Request(self.current_url,
                      headers={'User-Agent': self.options['crawler']['user-agent']})
@@ -123,14 +126,15 @@ class Worker(threading.Thread):
                     self.url = urllib.request.urlopen(self.req)
 
                 except urllib.error.URLError:
-                    print("URLError: ",self.current_url)
+                    # self.logger.error("URLError: " + self.current_url)
                 except urllib.error.HTTPError:
                     # we are going to wait a second when we try to reopen this
                     # url next time if we haven't done already ourselves
-                    print("HTTPError: ",self.current_url)
+                    # self.logger.error("HTTPError: " + self.current_url)
                     if not (len(queue_item) > 2):
                         self.queue.put((self.current_url, self.depth, 1))
                 else:
+                    # self.logger.debug("Done: " + self.current_url)
                     url_content_type = self.url.info().get_content_type()
                     for allowed_content_type in self.options['crawler']['allow-content'].split(','):
                         if allowed_content_type in url_content_type:
@@ -148,7 +152,7 @@ class Worker(threading.Thread):
 
                     self.data = self.data.decode(self.encoding) # Fetch the data from the webpage
 
-                    self.urls = re.findall(self.options['regexes']['url'], self.data) # Fetch all urls from the webpage
+                    self.urls = self.parser.pull_urls(self.data) # Fetch all urls from the webpage
                     #self.urls = filter(None, self.urls)
                     try: # If the webpage has a charset set
                         self.data = self.parser.parse_page(self.data.lower()) # Parse a decoded webpage

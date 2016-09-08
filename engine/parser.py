@@ -12,6 +12,12 @@ class PageParser(object):
         self.options = fetch_options()
 
 
+    def pull_urls(self, page):
+        soup = BeautifulSoup(page)
+        soup.prettify()
+        return [anchor['href'] for anchor in soup.findAll('a', href=True)]
+
+
     def parse_page(self, page):
         # Remove unnecessary characters
         page = re.sub(self.options['regexes']['escape'] , "", page)
