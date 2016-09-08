@@ -122,9 +122,12 @@ class Worker(threading.Thread):
 
                     self.url = urllib.request.urlopen(self.req)
 
+                except urllib.error.URLError:
+                    print("URLError: ",self.current_url)
                 except urllib.error.HTTPError:
                     # we are going to wait a second when we try to reopen this
                     # url next time if we haven't done already ourselves
+                    print("HTTPError: ",self.current_url)
                     if not (len(queue_item) > 2):
                         self.queue.put((self.current_url, self.depth, 1))
                 else:

@@ -17,8 +17,7 @@ class PageParser(object):
         page = re.sub(self.options['regexes']['escape'] , "", page)
         page = re.sub(self.options['regexes']['split'] , " ", page)
 
-        soup = BeautifulSoup(page, "html.parser",
-         convertEntities=BeautifulSoup.HTML_ENTITIES)
+        soup = BeautifulSoup(page, "html.parser")
         # kill all script and style elements
         for script in soup(["script", "style"]):
             script.extract()
