@@ -22,7 +22,10 @@ from handlers.search import SearchHandler
 if not os.path.exists("data/logs"):
     os.mkdir("data/logs")
 
-# TODO: check if hurricane.cfg exists
+if not os.path.isfile("hurricane.cfg"):
+    print("[-] Please rename hurricane.cfg.example to hurricane.cfg")
+    print("[-] and make the appropriate changes.")
+    sys.exit(0)
 
 # TODO: add handler logs
 # logging.basicConfig(filename='error.log', level=logging.DEBUG)
