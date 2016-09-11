@@ -22,6 +22,8 @@ from handlers.search import SearchHandler
 if not os.path.exists("data/logs"):
     os.mkdir("data/logs")
 
+# TODO: check if hurricane.cfg exists
+
 # TODO: add handler logs
 # logging.basicConfig(filename='error.log', level=logging.DEBUG)
 
@@ -31,7 +33,6 @@ crawl = crawler.Crawler(int(OPTIONS["crawler"]["threads"]), OPTIONS["crawler"]["
 crawl.begin()
 
 search_parser = SearchParser(crawl.get_logger())
-
 
 application = tornado.web.Application(
     [
