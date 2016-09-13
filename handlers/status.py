@@ -19,6 +19,6 @@ class StatusHandler(tornado.web.RequestHandler):
         self.render("crawl.html", results=urls, robots=urls_robots)
 
     def post(self):
-        if url_validator(self.get_argument('search_string')):
-            self.crawler.add_website(self.get_argument('search_string'))
+
+        self.crawler.add_website(self.get_argument('search_string'))
         self.redirect("/status")

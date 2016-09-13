@@ -14,6 +14,7 @@ import tornado.web
 import engine.crawler as crawler
 from engine.config import fetch_options
 from engine.parser import SearchParser
+from engine.utils import construct_logger, zip_old_logs
 from handlers.suggestions import SuggestionsHandler
 from handlers.status import StatusHandler
 from handlers.search import SearchHandler
@@ -27,15 +28,16 @@ if not os.path.isfile("hurricane.cfg"):
     print("[-] and make the appropriate changes.")
     sys.exit(0)
 
-# TODO: add handler logs
-# logging.basicConfig(filename='error.log', level=logging.DEBUG)
+zip_old_logs()
+# TODO: integrate the handler logger in the handlers
+handler_logger = construct_logger("data/logs/handlers")
 
 OPTIONS = fetch_options()
 
 crawl = crawler.Crawler(int(OPTIONS["crawler"]["threads"]), OPTIONS["crawler"]["depth"])
 crawl.begin()
 
-search_parser = SearchParser(crawl.get_logger())
+search_parser = SearchParser(handler_logger)
 
 application = tornado.web.Application(
     [

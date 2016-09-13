@@ -10,9 +10,16 @@ def construct_regex(search_string):
 
 
 def construct_logger(name):
-    # TODO: make a logger that will zip old logs
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     handler = logging.FileHandler(os.getcwd() + '/' + name + '.txt')
     logger.addHandler(handler)
     return logger
+
+
+def zip_old_logs():
+    # TODO:
+    # find all txt filters
+    # get their ct = creation time
+    # zip them as ct.zip
+    pass

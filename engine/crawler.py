@@ -36,7 +36,8 @@ class Crawler(object):
 
 
     def add_website(self, website_url):
-        self.queue.put((website_url, 0)) # Add a url in the queue
+        if url_validator(website_url):
+            self.queue.put((remove_backslash(website_url), 0)) # Add a url in the queue
 
 
     def begin(self):
@@ -163,6 +164,7 @@ class Worker(threading.Thread):
                     self.storage.record_db(self.data, self.current_url) # Record the results
 
                     # Add the urls found in the webpage
+                    # TODO: some urls ending with / are crawled again
                     for url in self.urls:
                         fixed_url = complete_domain(crop_fragment_identifier(url), self.current_url)
                         # self.logger.debug(str((fixed_url,url_validator(fixed_url),self.should_ignore(fixed_url))))

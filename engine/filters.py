@@ -51,6 +51,12 @@ def crop_fragment_identifier(url_path):
     return url_path
 
 
+def remove_backslash(url_path):
+    if url_path[-1] == "/":
+        return url_path[:-1]
+    return url_path
+
+
 def complete_domain(url_path, current_url):
     try:
         if not urlparse(url_path).netloc:
@@ -58,7 +64,7 @@ def complete_domain(url_path, current_url):
             url_path = urljoin(http_checker(current_domain), url_path)
     except IndexError:
         pass
-    return url_path
+    return remove_backslash(url_path)
 
 
 def http_checker(url):
