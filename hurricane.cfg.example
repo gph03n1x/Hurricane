@@ -1,6 +1,7 @@
 [app]
 # Port the application is going to listen for http connections
 port = 8000
+words-per-description = 25
 
 [mongo]
 # MongoDB host, port, database settings that the application is going to use
@@ -32,7 +33,3 @@ ignore-extensions = css,js,png,jpeg,jpg,ico
 # Do not mess with these except if you know what you are doing
 split = \s+
 escape = (\\n|\\t|\\r)
-
-[parser]
-# Files with stop words separated by comma inside the stop-words folders
-stop-word-files = stop-words-english1.txt,stop-words-english2.txt,stop-words-english3.txt,stop-words-english4.txt,stop-words-english5.txt

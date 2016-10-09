@@ -2,16 +2,16 @@
 
 A python search engine + crawler with tornado
 
-
-### Requirements
-
-* Tornado
-* Pymongo
-* BeautifulSoup4
-
 ### Configuring and Running
 
+Run the following command to install all the packages
 
+```bash
+pip install -r requirements.txt
+```
+
+Rename the hurricane.cfg.example to hurricane.cfg
+and change the settings.
 
 ```bash
 python app.py

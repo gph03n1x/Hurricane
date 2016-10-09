@@ -19,6 +19,9 @@ from handlers.suggestions import SuggestionsHandler
 from handlers.status import StatusHandler
 from handlers.search import SearchHandler
 
+print("[*]Updating stopwords")
+import nltk
+nltk.download("stopwords")
 
 if not os.path.exists("data/logs"):
     os.mkdir("data/logs")
