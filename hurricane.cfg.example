@@ -1,7 +1,13 @@
 [app]
 # Port the application is going to listen for http connections
 port = 8000
-words-per-description = 25
+
+[nltk]
+# Left and right margin for getting concordances for description results
+left-margin = 10
+right-margin = 10
+# concordance results for every word
+concordance-results = 2
 
 [mongo]
 # MongoDB host, port, database settings that the application is going to use

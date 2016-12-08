@@ -12,9 +12,10 @@ from engine.filters import gather_words_around_search_word as gwasw
 
 
 class SearchHandler(tornado.web.RequestHandler):
-    def initialize(self, database, parser):
+    def initialize(self, database, parser, options):
         self.database = database
         self.parser = parser
+        self.options = options
 
 
     def get(self):
@@ -34,16 +35,17 @@ class SearchHandler(tornado.web.RequestHandler):
 
 
     def post(self):
-        # TODO: Clean up search from useless spaces
         search_string = self.parser.parse_input(self.get_argument('search_string').lower())
         search_string = re.split(re.compile(r'\s+') , search_string)
-
+        # TODO: move search engine/search.py
         matched_results = [
             {
                 # Get the main part of the crawled webpage
-                # TODO: make gwasw configurable
                 'content': self.escape_and_bold(
-                    gwasw(match['data'], search_string, 25),
+                    gwasw(match['data'], search_string,
+                     int(self.options['nltk']['left-margin']),
+                      int(self.options['nltk']['right-margin']),
+                      int(self.options['nltk']['concordance-results'])),
                     search_string
                 ),
                 # Get the url

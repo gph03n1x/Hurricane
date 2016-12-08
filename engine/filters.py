@@ -4,7 +4,8 @@ import logging
 import urllib.error
 import urllib.robotparser
 from urllib.parse import urlparse, urljoin
-
+import itertools
+import nltk
 
 def gather_robots_txt(domain):
     robots = http_checker(domain) + "/robots.txt"
@@ -19,21 +20,18 @@ def gather_robots_txt(domain):
         return robot_parser
 
 
-def gather_chars_around_search_word(given_description, given_word, length):
-    position = given_description.find(given_word)
-    return given_description[position - length // 2 : position + length // 2]
+def gather_words_around_search_word(given_description, given_words,
+ left_margin, right_margin, num_of_results):
+    #https://simply-python.com/2014/03/14/saving-output-of-nltk-text-concordance/
+    tokens = nltk.word_tokenize(given_description)
+    text = nltk.Text(tokens)
 
+    c = nltk.ConcordanceIndex(tokens, key = lambda s: s.lower())
+    concordance_txt = ([[text.tokens[list(map(lambda x: x-5 if (x-left_margin)>0 else 0,[offset]))[0]:offset+right_margin]
+                        for offset in c.offsets(given_word)][:num_of_results] for given_word in given_words])
 
-def gather_words_around_search_word(given_description, given_words, words_count):
-    description_words = given_description.split()
-    for given_word in given_words:
-        if given_word in description_words:
-            word_index = description_words.index(given_word)
-            start = max(0, word_index-words_count)
-            end = min(len(description_words), word_index+words_count)
-            return " ".join(description_words[start:end])
-    # TODO: return a random part of the description
-    return ""
+    concordance_txt = itertools.chain(*concordance_txt)
+    return '\n'.join([''.join([x+' ' for x in con_sub]) for con_sub in concordance_txt])
 
 
 def url_validator(url):

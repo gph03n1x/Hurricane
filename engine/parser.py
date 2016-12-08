@@ -20,6 +20,7 @@ class PageParser(object):
 
 
     def parse_page(self, page):
+        # TODO: detect language
         # Remove unnecessary characters
         page = re.sub(self.options['regexes']['escape'] , "", page)
         page = re.sub(self.options['regexes']['split'] , " ", page)
@@ -41,5 +42,6 @@ class SearchParser(object):
 
 
     def parse_input(self, user_input):
+        # TODO: detect language
         page = self.pattern.sub(" ", user_input)
         return page

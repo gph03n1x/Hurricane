@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 # -*- coding: utf-8 -*-
 import sys
 if len(sys.argv) > 1:
@@ -18,10 +18,10 @@ from engine.utils import construct_logger, zip_old_logs
 from handlers.suggestions import SuggestionsHandler
 from handlers.status import StatusHandler
 from handlers.search import SearchHandler
-
-print("[*]Updating stopwords")
 import nltk
+
 nltk.download("stopwords")
+nltk.download("punkt")
 
 if not os.path.exists("data/logs"):
     os.mkdir("data/logs")
@@ -44,7 +44,7 @@ search_parser = SearchParser(handler_logger)
 
 application = tornado.web.Application(
     [
-    (r"/", SearchHandler, dict(database=crawl.get_storage(),parser=search_parser)),
+    (r"/", SearchHandler, dict(database=crawl.get_storage(),parser=search_parser, options=OPTIONS)),
     (r"/suggest", SuggestionsHandler, dict(search=crawl.get_storage().get_search_collection())),
     (r"/status", StatusHandler, dict(crawler=crawl))
     ],
