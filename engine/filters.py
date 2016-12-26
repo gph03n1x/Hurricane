@@ -22,12 +22,12 @@ def gather_robots_txt(domain):
 
 def gather_words_around_search_word(given_description, given_words,
  left_margin, right_margin, num_of_results):
-    #https://simply-python.com/2014/03/14/saving-output-of-nltk-text-concordance/
+    # https://simply-python.com/2014/03/14/saving-output-of-nltk-text-concordance/
     tokens = nltk.word_tokenize(given_description)
     text = nltk.Text(tokens)
 
     c = nltk.ConcordanceIndex(tokens, key = lambda s: s.lower())
-    concordance_txt = ([[text.tokens[list(map(lambda x: x-5 if (x-left_margin)>0 else 0,[offset]))[0]:offset+right_margin]
+    concordance_txt = ([[text.tokens[list(map(lambda x: x-left_margin if (x-left_margin)>0 else left_margin-x,[offset]))[0]:offset+right_margin+1]
                         for offset in c.offsets(given_word)][:num_of_results] for given_word in given_words])
 
     concordance_txt = itertools.chain(*concordance_txt)
