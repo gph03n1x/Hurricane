@@ -1,6 +1,7 @@
 
 # -*- coding: utf-8 -*-
 import sys
+# TODO: create an argparser maybe.
 if len(sys.argv) > 1:
     import tests
     sys.exit(0)
@@ -31,7 +32,7 @@ if not os.path.isfile("hurricane.cfg"):
     print("[-] and make the appropriate changes.")
     sys.exit(0)
 
-zip_old_logs()
+zip_old_logs("data/logs")
 # TODO: integrate the handler logger in the handlers
 handler_logger = construct_logger("data/logs/handlers")
 

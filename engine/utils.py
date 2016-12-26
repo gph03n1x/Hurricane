@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import logging
-
+import zipfile
 
 def construct_regex(search_string):
     regex_string = "".join(r"(?=.*\b{0}\b)".format(part) for part in search_string)
@@ -17,9 +17,13 @@ def construct_logger(name):
     return logger
 
 
-def zip_old_logs():
-    # TODO:
-    # find all txt filters
-    # get their ct = creation time
-    # zip them as ct.zip
-    pass
+def zip_old_logs(logs_folder):
+    # TODO: convert timestamp to a more readable form
+    if os.path.exists(logs_folder+"/crawler.txt"):
+        ct = str(os.stat(logs_folder+"/crawler.txt").st_ctime)
+        with zipfile.ZipFile(logs_folder+"/"+ct+".zip", 'w') as myzip:
+            myzip.write(logs_folder+"/crawler.txt")
+            myzip.write(logs_folder+"/handlers.txt")
+        os.remove(logs_folder+"/crawler.txt")
+        os.remove(logs_folder+"/handlers.txt")
+
