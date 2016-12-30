@@ -4,10 +4,6 @@ import os
 import logging
 import zipfile
 
-def construct_regex(search_string):
-    regex_string = "".join(r"(?=.*\b{0}\b)".format(part) for part in search_string)
-    return r"({0}.*)".format(regex_string)
-
 
 def construct_logger(name):
     logger = logging.getLogger(name)
@@ -26,4 +22,3 @@ def zip_old_logs(logs_folder):
             myzip.write(logs_folder+"/handlers.txt")
         os.remove(logs_folder+"/crawler.txt")
         os.remove(logs_folder+"/handlers.txt")
-

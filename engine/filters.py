@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
+import itertools
 import urllib.error
 import urllib.robotparser
 from urllib.parse import urlparse, urljoin
-import itertools
+# Third party libraries
 import nltk
 
 def gather_robots_txt(domain):
@@ -22,6 +23,7 @@ def gather_robots_txt(domain):
 
 def gather_words_around_search_word(given_description, given_words,
  left_margin, right_margin, num_of_results):
+    # TODO: if there is no result create an personal function
     # https://simply-python.com/2014/03/14/saving-output-of-nltk-text-concordance/
     given_description = "".join(given_description)
     tokens = nltk.word_tokenize(given_description)
@@ -41,6 +43,7 @@ def url_validator(url):
         result = urlparse(url)
         return True if result.scheme and result.netloc else False
     except Exception as exem:
+        # TODO: log properly
         print(exem)
         return False
 

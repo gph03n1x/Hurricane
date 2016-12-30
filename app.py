@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
 # TODO: create an argparser maybe.
@@ -10,16 +10,19 @@ import re
 import string
 import os.path
 import logging
+# Third party libraries
+import nltk
 import tornado.ioloop
 import tornado.web
+# Engine libraries
 import engine.crawler as crawler
 from engine.config import fetch_options
 from engine.parser import SearchParser
 from engine.utils import construct_logger, zip_old_logs
+# Handler libraries
 from handlers.suggestions import SuggestionsHandler
 from handlers.status import StatusHandler
 from handlers.search import SearchHandler
-import nltk
 
 nltk.download("stopwords")
 nltk.download("punkt")
@@ -45,7 +48,7 @@ search_parser = SearchParser(handler_logger)
 
 application = tornado.web.Application(
     [
-    (r"/", SearchHandler, dict(database=crawl.get_storage(),parser=search_parser, options=OPTIONS)),
+    (r"/", SearchHandler, dict(database=crawl.get_storage(),parser=search_parser,options=OPTIONS,logger=handler_logger)),
     (r"/suggest", SuggestionsHandler, dict(search=crawl.get_storage().get_search_collection())),
     (r"/status", StatusHandler, dict(crawler=crawl))
     ],

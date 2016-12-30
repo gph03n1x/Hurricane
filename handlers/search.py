@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
-import logging
+# Third party libraries
 import tornado.web
 import tornado.escape as esc
+# Engine libraries
 import engine.config
-from engine.utils import construct_regex
 from engine.parser import SearchParser
 from engine.filters import http_checker
 from engine.filters import gather_words_around_search_word as gwasw
 
 
 class SearchHandler(tornado.web.RequestHandler):
-    def initialize(self, database, parser, options):
+    def initialize(self, database, parser, options, logger):
         self.database = database
         self.parser = parser
         self.options = options
+        self.logger = logger
 
 
     def get(self):
@@ -35,9 +36,9 @@ class SearchHandler(tornado.web.RequestHandler):
 
 
     def post(self):
-        search_string = self.parser.parse_input(self.get_argument('search_string').lower())
-        search_string = re.split(re.compile(r'\s+') , search_string)
 
+        search_string = self.parser.parse_input(self.get_argument('search_string').lower())
+        search_string = re.sub(re.compile(r'\s+'), " ", search_string)
         matched_results = [
             {
                 # Get the main part of the crawled webpage
@@ -52,9 +53,11 @@ class SearchHandler(tornado.web.RequestHandler):
                 'url': http_checker(match['url']),
                 'title': match['title']
 
-            } for match in self.database.get_lists_collection().find({
-                "data": { '$regex': construct_regex(search_string)}
-            }) # Search mongodb
+            } for match in self.database.lists.find(
+             { "$text": { "$search": search_string } }
+            )
+
+             # Search mongodb
         ]
 
         if len(matched_results) > 0:
