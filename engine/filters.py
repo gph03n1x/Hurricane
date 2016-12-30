@@ -26,16 +26,33 @@ def gather_words_around_search_word(given_description, given_words,
     # TODO: if there is no result create an personal function
     # https://simply-python.com/2014/03/14/saving-output-of-nltk-text-concordance/
     results = []
-    count = 0
-    for line in given_description[0].split('\n'):
-        for word in given_words:
-            if word in line:
-                results.append(line)
-                count += 1
-        if count >= num_of_results:
-            break
-    print(count)
-    return "\n".join(results)
+
+    for word in given_words.split():
+
+        # FILTER TRICKS AND STUFF
+        if not word in given_description:
+            continue
+        description = given_description.split()
+        count = 0
+        while count < num_of_results:
+            count += 1
+            if word in description:
+                index = description.index(word)
+                results.append(index)
+                description=description[description.index(word)+1:]
+            else:
+                break
+
+    description = given_description.split()
+    size = len(description)
+    total_result = ""
+    for result in results:
+
+        total_result += " ".join(description[max(0, result-left_margin):min(size, result+right_margin)])+"\n"
+
+    #print(description)
+    #print(total_result)
+    return total_result
 
 
 

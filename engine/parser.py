@@ -28,7 +28,11 @@ class PageParser(object):
         # kill all script and style elements
         for script in soup(["script", "style"]):
             script.extract()
-        title = soup.title.text
+            
+        title = ""
+        if hasattr(soup.title, 'title'):
+            title = soup.title.text
+
         page = soup.get_text()
         page = re.sub(self.options['regexes']['split'] , " ", page)
         return page, title

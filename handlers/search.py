@@ -30,7 +30,7 @@ class SearchHandler(tornado.web.RequestHandler):
 
     def escape_and_bold(self, data, search_string):
         data = esc.xhtml_escape(data)
-        for word in search_string:
+        for word in search_string.split():
             data = data.replace(word, self.bold_(word))
         return data
 
@@ -43,7 +43,7 @@ class SearchHandler(tornado.web.RequestHandler):
         for match in self.database.lists.find({ "$text": { "$search": search_string } }):
             res = gwasw(match['data'], search_string, int(self.options['nltk']['left-margin']), int(self.options['nltk']['right-margin']),
             int(self.options['nltk']['concordance-results']))
-            match['data'] = res
+            match['data'] = self.escape_and_bold(res, search_string)
             matched_results.append(match)
 
         if len(matched_results) > 0:
