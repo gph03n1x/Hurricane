@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import re
-import string
 import logging
 import threading
-import urllib.request
 import urllib.error
-import multiprocessing
 from time import sleep
-
 import asyncio
+# Third party libraries
 import aiohttp
 from pymongo import MongoClient
-
+# Engine libraries
 from engine.filters import *
 from engine.config import fetch_options
 from engine.parser import PageParser
@@ -33,7 +29,6 @@ class Crawler(threading.Thread):
         self.parser = PageParser(self.logger)
 
 
-
     def get_storage(self):
         return self.storage
 
@@ -43,11 +38,18 @@ class Crawler(threading.Thread):
 
 
     def add_website(self, website_url):
+        """
+        Adding a webpage to addToQueue List in order
+        to add it asynchronously when a worker will go Idle
+        """
         if url_validator(website_url):
             self.addToQueue.append((remove_backslash(website_url), 0)) # Add a url in the queue
 
 
     def run(self):
+        """
+        Constructs an event loop and adds a number of workers
+        """
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         for thread in range(0, self.max_threads):
@@ -140,12 +142,14 @@ class Worker():
                     )
                     self.url = await session.get(self.current_url)
                 except urllib.error.URLError:
-                    pass
-                    # self.logger.error("URLError: " + self.current_url)
+                    self.url.close()
+                    session.close()
                 except urllib.error.HTTPError:
                     # we are going to wait a second when we try to reopen this
                     # url next time if we haven't done already ourselves
                     # self.logger.error("HTTPError: " + self.current_url)
+                    self.url.close()
+                    session.close()
                     if not (len(queue_item) > 2):
                         await self.queue.put((self.current_url, self.depth, 1))
                 else:
@@ -161,8 +165,6 @@ class Worker():
                     self.data = await self.url.read()
                     self.url.close()
                     session.close()
-                    self.logger.debug("Parsing: " + self.current_url)
-
                     self.urls = self.parser.pull_urls(self.data) # Fetch all urls from the webpage
                     #self.urls = filter(None, self.urls)
                     try: # If the webpage has a charset set
@@ -173,7 +175,6 @@ class Worker():
                     self.storage.record_db(self.data, self.current_url) # Record the results
 
                     # Add the urls found in the webpage
-                    # TODO: some urls ending with / are crawled again
                     for url in self.urls:
                         fixed_url = complete_domain(crop_fragment_identifier(url), self.current_url)
                         # self.logger.debug(str((fixed_url,url_validator(fixed_url),self.should_ignore(fixed_url))))
