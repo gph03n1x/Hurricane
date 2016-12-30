@@ -23,6 +23,7 @@ def gather_robots_txt(domain):
 def gather_words_around_search_word(given_description, given_words,
  left_margin, right_margin, num_of_results):
     # https://simply-python.com/2014/03/14/saving-output-of-nltk-text-concordance/
+    given_description = "".join(given_description)
     tokens = nltk.word_tokenize(given_description)
     text = nltk.Text(tokens)
 
@@ -32,6 +33,7 @@ def gather_words_around_search_word(given_description, given_words,
 
     concordance_txt = itertools.chain(*concordance_txt)
     return '\n'.join([''.join([x+' ' for x in con_sub]) for con_sub in concordance_txt])
+
 
 
 def url_validator(url):

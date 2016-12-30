@@ -50,7 +50,8 @@ class MongoDBRecorder(object):
     def record_db(self, data, url):
         # Update the database with url and data
         try:
-            data_list = {"data": data, "url": url, "time_scanned": datetime.now()}
+            # data[0] is the data, data[1] is the title
+            data_list = {"data": data[0], "url": url, "time_scanned": datetime.now(), "title": data[1]}
             list_result = self.lists.find({"url": url})
             if list_result.count() == 0:
                 self.lists.insert(data_list)
