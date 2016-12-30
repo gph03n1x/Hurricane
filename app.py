@@ -39,7 +39,7 @@ handler_logger = construct_logger("data/logs/handlers")
 OPTIONS = fetch_options()
 
 crawl = crawler.Crawler(int(OPTIONS["crawler"]["threads"]), OPTIONS["crawler"]["depth"])
-crawl.begin()
+crawl.start()
 
 search_parser = SearchParser(handler_logger)
 

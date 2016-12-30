@@ -8,7 +8,11 @@ import urllib.request
 import urllib.error
 import multiprocessing
 from time import sleep
+
+import asyncio
+import aiohttp
 from pymongo import MongoClient
+
 from engine.filters import *
 from engine.config import fetch_options
 from engine.parser import PageParser
@@ -16,15 +20,18 @@ from engine.storage import MongoDBRecorder
 from engine.utils import construct_logger
 
 
-class Crawler(object):
+class Crawler(threading.Thread):
     def __init__(self, max_threads, max_depth):
-        self.queue = multiprocessing.Queue()
+        super(Crawler, self).__init__()
+        self.addToQueue = []
+        self.queue = asyncio.Queue()
         self.threads = {}
         self.max_threads = max_threads
         self.max_depth = max_depth
         self.logger = construct_logger("data/logs/crawler")
         self.storage = MongoDBRecorder(self.logger)
         self.parser = PageParser(self.logger)
+
 
 
     def get_storage(self):
@@ -37,20 +44,24 @@ class Crawler(object):
 
     def add_website(self, website_url):
         if url_validator(website_url):
-            self.queue.put((remove_backslash(website_url), 0)) # Add a url in the queue
+            self.addToQueue.append((remove_backslash(website_url), 0)) # Add a url in the queue
 
 
-    def begin(self):
+    def run(self):
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
         for thread in range(0, self.max_threads):
             # Spawn and start the threads
             self.threads[thread] = Worker(self.max_depth, self.logger,
-             self.queue, self.storage, self.parser)
-            self.threads[thread].start()
+             self.queue, self.storage, self.parser, self.addToQueue)
+            self.loop.create_task(self.threads[thread].begin())
+        self.loop.run_forever()
 
 
-class Worker(threading.Thread):
-    def __init__(self, max_depth, logger, queue, storage, parser):
-        super(Worker, self).__init__()
+
+class Worker():
+    def __init__(self, max_depth, logger, queue, storage, parser, addToQ):
+        self.addToQ = addToQ
         self.max_depth = int(max_depth)
         self.current_url = "Idle"
         self.logger = logger
@@ -93,39 +104,41 @@ class Worker(threading.Thread):
         return True
 
 
-    def run(self):
+    async def begin(self):
         while True:
             try:
                 if not self.queue.empty():
-                    item = self.queue.get()
-                    self.work(item) # crawl the item
+                    item = await self.queue.get()
+                    await self.work(item) # crawl the item
                 else:
+                    while len(self.addToQ) > 0:
+                        pendingQ = self.addToQ.pop()
+                        await self.queue.put(pendingQ)
                     # Let the thread go idle until a new item comes up
                     # and set its status as Idle
                     self.current_url = "Idle"
-                    sleep(1)
+                    await asyncio.sleep(1)
             except Exception:
                 self.logger.exception('Worker::run')
 
 
-    def work(self, queue_item):
+    async def work(self, queue_item):
         # queue_item[0] is the url, queue_item[1] is the depth
         self.current_url = queue_item[0]
         self.depth = queue_item[1]
         if len(queue_item) > 2:
-            sleep(queue_item[2])
+            await asyncio.sleep(queue_item[2])
         try:
             # self.logger.debug("Checking: " + self.current_url)
             # self.logger.debug("Storage: " + str(self.storage.record_url(self.current_url)))
             # self.logger.debug("Robots.txt: " + str(self.can_record()))
             if self.storage.record_url(self.current_url) and self.can_record():
-                print("Crawling: "+ self.current_url)
+                self.logger.debug("Crawling: " + self.current_url)
                 try:
-                    self.req = urllib.request.Request(self.current_url,
-                     headers={'User-Agent': self.options['crawler']['user-agent']})
-
-                    self.url = urllib.request.urlopen(self.req)
-
+                    session = aiohttp.ClientSession(
+                     headers={'User-Agent': self.options['crawler']['user-agent']}
+                    )
+                    self.url = await session.get(self.current_url)
                 except urllib.error.URLError:
                     pass
                     # self.logger.error("URLError: " + self.current_url)
@@ -134,10 +147,10 @@ class Worker(threading.Thread):
                     # url next time if we haven't done already ourselves
                     # self.logger.error("HTTPError: " + self.current_url)
                     if not (len(queue_item) > 2):
-                        self.queue.put((self.current_url, self.depth, 1))
+                        await self.queue.put((self.current_url, self.depth, 1))
                 else:
                     # self.logger.debug("Done: " + self.current_url)
-                    url_content_type = self.url.info().get_content_type()
+                    url_content_type = self.url.headers['content-type']
                     for allowed_content_type in self.options['crawler']['allow-content'].split(','):
                         if allowed_content_type in url_content_type:
                             break
@@ -145,14 +158,10 @@ class Worker(threading.Thread):
                         # Ignore the url that has any other content than
                         # the specified in the config
                         return
-
-                    self.data = self.url.read()
-                    self.encoding = self.url.headers.get_content_charset()
-                    if self.encoding is None:
-                        # it is bytes probably ,ex: images
-                        return # nothing more to do here.
-
-                    self.data = self.data.decode(self.encoding) # Fetch the data from the webpage
+                    self.data = await self.url.read()
+                    self.url.close()
+                    session.close()
+                    self.logger.debug("Parsing: " + self.current_url)
 
                     self.urls = self.parser.pull_urls(self.data) # Fetch all urls from the webpage
                     #self.urls = filter(None, self.urls)
@@ -180,7 +189,7 @@ class Worker(threading.Thread):
 
                         if self.depth + 1 <= self.max_depth and self.storage.record_url(fixed_url):
                             # If the url doesnt exceed 2 depth and isn't already scanned
-                            self.queue.put((fixed_url ,
+                            await self.queue.put((fixed_url ,
                                             self.depth + 1)) # Add the url to the queue and increase the depth
 
         except Exception:

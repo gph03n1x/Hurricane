@@ -14,7 +14,7 @@ class PageParser(object):
 
 
     def pull_urls(self, page):
-        soup = BeautifulSoup(page)
+        soup = BeautifulSoup(page, "html.parser")
         soup.prettify()
         return [anchor['href'] for anchor in soup.findAll('a', href=True)]
 
