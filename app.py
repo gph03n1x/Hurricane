@@ -45,7 +45,7 @@ search_parser = SearchParser(handler_logger)
 
 application = tornado.web.Application(
     [
-    (r"/", SearchHandler, dict(database=crawl.get_storage(),parser=search_parser, options=OPTIONS)),
+    (r"/", SearchHandler, dict(database=crawl.get_storage(),parser=search_parser,options=OPTIONS,logger=handler_logger)),
     (r"/suggest", SuggestionsHandler, dict(search=crawl.get_storage().get_search_collection())),
     (r"/status", StatusHandler, dict(crawler=crawl))
     ],
