@@ -39,26 +39,12 @@ class SearchHandler(tornado.web.RequestHandler):
 
         search_string = self.parser.parse_input(self.get_argument('search_string').lower())
         search_string = re.sub(re.compile(r'\s+'), " ", search_string)
-        matched_results = [
-            {
-                # Get the main part of the crawled webpage
-                'content': self.escape_and_bold(
-                    gwasw(match['data'], search_string,
-                     int(self.options['nltk']['left-margin']),
-                      int(self.options['nltk']['right-margin']),
-                      int(self.options['nltk']['concordance-results'])),
-                    search_string
-                ),
-                # Get the url
-                'url': http_checker(match['url']),
-                'title': match['title']
-
-            } for match in self.database.lists.find(
-             { "$text": { "$search": search_string } }
-            )
-
-             # Search mongodb
-        ]
+        matched_results = []
+        for match in self.database.lists.find({ "$text": { "$search": search_string } }):
+            res = gwasw(match['data'], search_string, int(self.options['nltk']['left-margin']), int(self.options['nltk']['right-margin']),
+            int(self.options['nltk']['concordance-results']))
+            match['data'] = res
+            matched_results.append(match)
 
         if len(matched_results) > 0:
             self.database.record_search(self.get_argument('search_string'))

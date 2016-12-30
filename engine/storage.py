@@ -16,6 +16,7 @@ class MongoDBRecorder(object):
             self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['searches-collection']]
             self.db = CLIENT[self.options['mongo']['database']]
             self.lists.create_index( [("data", pymongo.TEXT)] )
+            self.search.create_index( [("search", pymongo.TEXT)] )
         except Exception as mongo_error:
             print("[-] Database Error , exitting ...")
             self.logger.exception("mongo_recorder::__init__")

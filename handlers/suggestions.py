@@ -14,8 +14,8 @@ class SuggestionsHandler(tornado.web.RequestHandler):
 
 
     def post(self):
-        search_string = re.split(re.compile(r'\s+') , self.get_argument('search_string').lower())
-        for match in self.SEARCH.find({"search": { '$regex': search_string}}):
+        search_string = re.sub(re.compile(r'\s+'), " ", self.get_argument('search_string').lower())
+        for match in self.SEARCH.find( { "$text": { "$search": search_string } }):
             response = """
             <li class="list-group-item"><a onClick="a_onClick(\'%s\')">%s</a></li>
             """ % (esc.xhtml_escape(match["search"]), esc.xhtml_escape(match["search"]))
