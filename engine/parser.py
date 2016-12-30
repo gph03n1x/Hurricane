@@ -14,7 +14,7 @@ class PageParser(object):
 
 
     def pull_urls(self, page):
-        soup = BeautifulSoup(page)
+        soup = BeautifulSoup(page, "html.parser")
         soup.prettify()
         return [anchor['href'] for anchor in soup.findAll('a', href=True)]
 
@@ -28,9 +28,10 @@ class PageParser(object):
         # kill all script and style elements
         for script in soup(["script", "style"]):
             script.extract()
+        title = soup.title.text
         page = soup.get_text()
         page = re.sub(self.options['regexes']['split'] , " ", page)
-        return page
+        return page, title
 
 
 class SearchParser(object):

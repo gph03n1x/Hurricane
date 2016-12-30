@@ -49,12 +49,14 @@ class SearchHandler(tornado.web.RequestHandler):
                     search_string
                 ),
                 # Get the url
-                'url': http_checker(match['url'])
+                'url': http_checker(match['url']),
+                'title': match['title']
+
             } for match in self.database.get_lists_collection().find({
                 "data": { '$regex': construct_regex(search_string)}
             }) # Search mongodb
         ]
-        
+
         if len(matched_results) > 0:
             self.database.record_search(self.get_argument('search_string'))
 
