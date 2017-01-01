@@ -6,13 +6,13 @@ from engine.filters import *
 
 class TestFilters(unittest.TestCase):
     # TODO: add tests for the rest of the functions
-    def test_gather_words_around_search_word(self):
+    def test_nltk_description(self):
         tests = {
-            "one more cipher based on the vigenere encryption in a more hardened version":[["vigenere"], 3, 3, 1, "based on the vigenere encryption in a "]
+            "one more cipher based on the vigenere encryption in a more hardened version":["vigenere", 3, 3, 1, "based on the vigenere encryption in a "]
         }
         for test in tests:
             self.assertEqual(
-                gather_words_around_search_word(test,
+                nltk_description(test,
                  tests[test][0], tests[test][1], tests[test][2],
                   tests[test][3]
                 ),

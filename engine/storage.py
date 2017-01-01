@@ -50,14 +50,11 @@ class MongoDBRecorder(object):
         return False
 
 
-    def record_db(self, data, url):
-        # TODO: pass the title as an argument and not as data[1]
-        # also take a look at the self.lists.update function when you do that
+    def record_db(self, data, url, title):
         # Update the database with url and data
         try:
-            print(type(data[0]))
-            # data[0] is the data, data[1] is the title
-            data_list = {"data": data[0], "url": url, "time_scanned": datetime.now(), "title": data[1]}
+
+            data_list = {"data": data, "url": url, "time_scanned": datetime.now(), "title": title}
             list_result = self.lists.find({"url": url})
             if list_result.count() == 0:
                 self.lists.insert(data_list)
@@ -66,9 +63,10 @@ class MongoDBRecorder(object):
                     {'_id':list_result[0]['_id']},
                     {
                         "$set": {
-                            "data": data[0],
+                            "data": data,
                             "urls": url,
-                            "time_scanned": datetime.now()
+                            "time_scanned": datetime.now(),
+                            "title": title
                         }
                     }, upsert=False)
         except Exception:

@@ -8,7 +8,7 @@ import tornado.escape as esc
 import engine.config
 from engine.parser import SearchParser
 from engine.filters import http_checker
-from engine.filters import gather_words_around_search_word as gwasw
+from engine.filters import nltk_description
 
 
 class SearchHandler(tornado.web.RequestHandler):
@@ -36,12 +36,12 @@ class SearchHandler(tornado.web.RequestHandler):
 
 
     def post(self):
-
         search_string = self.parser.parse_input(self.get_argument('search_string').lower())
         search_string = re.sub(re.compile(r'\s+'), " ", search_string)
+        # TODO: optimize this a bit.
         matched_results = []
         for match in self.database.lists.find({ "$text": { "$search": search_string } }):
-            res = gwasw(match['data'], search_string, int(self.options['nltk']['left-margin']), int(self.options['nltk']['right-margin']),
+            res = nltk_description(match['data'], search_string, int(self.options['nltk']['left-margin']), int(self.options['nltk']['right-margin']),
             int(self.options['nltk']['concordance-results']))
             match['data'] = self.escape_and_bold(res, search_string)
             matched_results.append(match)

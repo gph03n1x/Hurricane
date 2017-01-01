@@ -3,8 +3,9 @@
 import re
 import logging
 from bs4 import BeautifulSoup
-from engine.config import fetch_options
 from nltk.corpus import stopwords
+from engine.config import fetch_options
+from engine.utils import detect_language
 
 
 class PageParser(object):
@@ -28,13 +29,14 @@ class PageParser(object):
         # kill all script and style elements
         for script in soup(["script", "style"]):
             script.extract()
-            
+
         title = ""
         if hasattr(soup.title, 'title'):
             title = soup.title.text
 
         page = soup.get_text()
         page = re.sub(self.options['regexes']['split'] , " ", page)
+        self.logger.debug(detect_language(page))
         return page, title
 
 
@@ -48,5 +50,7 @@ class SearchParser(object):
 
     def parse_input(self, user_input):
         # TODO: detect language
+        self.logger.debug(detect_language(user_input))
         page = self.pattern.sub(" ", user_input)
+
         return page

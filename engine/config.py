@@ -9,14 +9,15 @@ def validate_config():
     pass
 
 
-def fetch_options():
+def fetch_options(cfg_file="hurricane.cfg"):
+    # TODO : cfg file should be defined from the main application
     options = {}
     config = configparser.RawConfigParser()
 
     if __name__ == '__main__':
-        config.read('../hurricane.cfg')
+        config.read('../'+cfg_file)
     else:
-        config.read('hurricane.cfg')
+        config.read(cfg_file)
 
     for sect in config.sections():
         options[sect] = {}

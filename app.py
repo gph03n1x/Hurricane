@@ -1,28 +1,38 @@
-
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys
-# TODO: create an argparser maybe.
-if len(sys.argv) > 1:
-    import tests
-    sys.exit(0)
 import os
-import re
-import string
+import sys
 import os.path
-import logging
+import argparse
+# Third party libraries
+import nltk
 import tornado.ioloop
 import tornado.web
+# Engine libraries
 import engine.crawler as crawler
 from engine.config import fetch_options
 from engine.parser import SearchParser
 from engine.utils import construct_logger, zip_old_logs
+# Handler libraries
 from handlers.suggestions import SuggestionsHandler
 from handlers.status import StatusHandler
 from handlers.search import SearchHandler
-import nltk
 
-nltk.download("stopwords")
-nltk.download("punkt")
+parser = argparse.ArgumentParser()
+parser.add_argument("--update",
+                    help="update nltk collections",
+                    action="store_true")
+parser.add_argument("--tests", help="run the hurricane unittests",
+                    action="store_true")
+args = parser.parse_args()
+
+if args.tests:
+    import tests
+    sys.exit(0)
+
+if args.update:
+    nltk.download("stopwords")
+    nltk.download("punkt")
 
 if not os.path.exists("data/logs"):
     os.mkdir("data/logs")
@@ -33,14 +43,13 @@ if not os.path.isfile("hurricane.cfg"):
     sys.exit(0)
 
 zip_old_logs("data/logs")
-# TODO: integrate the handler logger in the handlers
-handler_logger = construct_logger("data/logs/handlers")
 
 OPTIONS = fetch_options()
 
 crawl = crawler.Crawler(int(OPTIONS["crawler"]["threads"]), OPTIONS["crawler"]["depth"])
 crawl.start()
-
+# TODO: integrate the handler logger in the handlers
+handler_logger = construct_logger("data/logs/handlers")
 search_parser = SearchParser(handler_logger)
 
 application = tornado.web.Application(

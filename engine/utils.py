@@ -3,6 +3,45 @@
 import os
 import logging
 import zipfile
+import urllib.error
+import urllib.robotparser
+# Third Party Libraries
+from nltk import wordpunct_tokenize
+from nltk.corpus import stopwords
+# Engine libraries
+from engine.filters import http_checker
+
+
+def detect_language(text):
+    # TODO: This uses the stopwords not good enough against
+    # an advanced user
+    detected_language = "unknown"
+    max_score = 0
+    tokens = wordpunct_tokenize(text)
+    words = [word.lower() for word in tokens]
+    for language in stopwords.fileids():
+        stopwords_set = set(stopwords.words(language))
+        words_set = set(words)
+        common_elements = words_set.intersection(stopwords_set)
+        if len(common_elements) > max_score:
+            detected_language = language
+            max_score = len(common_elements)
+
+    return detected_language
+
+
+
+def gather_robots_txt(domain):
+    robots = http_checker(domain) + "/robots.txt"
+    try:
+        # logging.debug(url + "#" +  domain + "#" + robots)
+        robot_parser = urllib.robotparser.RobotFileParser()
+        robot_parser.set_url(robots)
+        robot_parser.read()
+    except urllib.error.HTTPError:
+        return None
+    else:
+        return robot_parser
 
 
 def construct_logger(name):

@@ -10,6 +10,7 @@ import aiohttp
 from pymongo import MongoClient
 # Engine libraries
 from engine.filters import *
+from engine.utils import gather_robots_txt
 from engine.config import fetch_options
 from engine.parser import PageParser
 from engine.storage import MongoDBRecorder
@@ -109,13 +110,14 @@ class Worker():
     async def begin(self):
         while True:
             try:
+                if len(self.addToQ) > 0:
+                    pendingQ = self.addToQ.pop()
+                    await self.queue.put(pendingQ)
+
                 if not self.queue.empty():
                     item = await self.queue.get()
                     await self.work(item) # crawl the item
                 else:
-                    while len(self.addToQ) > 0:
-                        pendingQ = self.addToQ.pop()
-                        await self.queue.put(pendingQ)
                     # Let the thread go idle until a new item comes up
                     # and set its status as Idle
                     self.current_url = "Idle"
@@ -131,9 +133,6 @@ class Worker():
         if len(queue_item) > 2:
             await asyncio.sleep(queue_item[2])
         try:
-            # self.logger.debug("Checking: " + self.current_url)
-            # self.logger.debug("Storage: " + str(self.storage.record_url(self.current_url)))
-            # self.logger.debug("Robots.txt: " + str(self.can_record()))
             if self.storage.record_url(self.current_url) and self.can_record():
                 self.logger.debug("Crawling: " + self.current_url)
                 try:
@@ -142,14 +141,16 @@ class Worker():
                     )
                     self.url = await session.get(self.current_url)
                 except urllib.error.URLError:
+                    # Closing the request and the session
                     self.url.close()
                     session.close()
                 except urllib.error.HTTPError:
+                    # Closing the request and the session
+                    self.url.close()
+                    session.close()
                     # we are going to wait a second when we try to reopen this
                     # url next time if we haven't done already ourselves
                     # self.logger.error("HTTPError: " + self.current_url)
-                    self.url.close()
-                    session.close()
                     if not (len(queue_item) > 2):
                         await self.queue.put((self.current_url, self.depth, 1))
                 else:
@@ -163,16 +164,18 @@ class Worker():
                         # the specified in the config
                         return
                     self.data = await self.url.read()
+                    # Closing the request and the session
                     self.url.close()
                     session.close()
                     self.urls = self.parser.pull_urls(self.data) # Fetch all urls from the webpage
                     #self.urls = filter(None, self.urls)
                     try: # If the webpage has a charset set
-                        self.data = self.parser.parse_page(self.data.lower()) # Parse a decoded webpage
+                        self.data, title = self.parser.parse_page(self.data.lower()) # Parse a decoded webpage
                     except (TypeError, UnicodeDecodeError): # If an exception is raised
-                        self.data = self.parser.parse_page(self.data.decode('utf-8').lower()) # parsing with utf-8 decoded
+                        self.data, title  = self.parser.parse_page(self.data.decode('utf-8').lower()) # parsing with utf-8 decoded
 
-                    self.storage.record_db(self.data, self.current_url) # Record the results
+                    # Record the results
+                    self.storage.record_db(self.data, self.current_url, title)
 
                     # Add the urls found in the webpage
                     for url in self.urls:
