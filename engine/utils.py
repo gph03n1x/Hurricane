@@ -57,6 +57,8 @@ def zip_old_logs(logs_folder):
         ct = str(os.stat(logs_folder+"/crawler.txt").st_ctime)
         with zipfile.ZipFile(logs_folder+"/"+ct+".zip", 'w') as myzip:
             myzip.write(logs_folder+"/crawler.txt")
-            myzip.write(logs_folder+"/handlers.txt")
+            if os.path.exists(logs_folder+"/handlers.txt"):
+                myzip.write(logs_folder+"/handlers.txt")
         os.remove(logs_folder+"/crawler.txt")
-        os.remove(logs_folder+"/handlers.txt")
+        if os.path.exists(logs_folder+"/handlers.txt"):
+            os.remove(logs_folder+"/handlers.txt")

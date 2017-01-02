@@ -40,9 +40,9 @@ class SearchHandler(tornado.web.RequestHandler):
         search_string = re.sub(re.compile(r'\s+'), " ", search_string)
         # TODO: optimize this a bit.
         matched_results = []
-        for match in self.database.lists.find({ "$text": { "$search": search_string } }):
-            res = nltk_description(match['data'], search_string, int(self.options['nltk']['left-margin']), int(self.options['nltk']['right-margin']),
-            int(self.options['nltk']['concordance-results']))
+        for match in self.database.lists.find({ "$text": { "$search": search_string } }).limit(self.options['app']['results-limit']):
+            res = nltk_description(match['data'], search_string, self.options['nltk']['left-margin'], self.options['nltk']['right-margin'],
+            self.options['nltk']['concordance-results'])
             match['data'] = self.escape_and_bold(res, search_string)
             matched_results.append(match)
 

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import time
 import os.path
 import argparse
 # Third party libraries
@@ -58,10 +59,20 @@ if __name__ == "__main__":
     if args.spider is not None:
         print("[*] Starting the spider ...")
         crawl.add_website(args.spider)
-        # TODO: check if all of the workers have gone idle
-        # And when they are all idle , kill them
-        # Sounds dark tbh
-        crawl.run()
+        crawl.start()
+        time.sleep(1)
+        while True:
+            stop = True
+            for worker in crawl.threads:
+                if not crawl.threads[worker].isIdle():
+                    stop = False
+
+            if stop == True:
+                for worker in crawl.threads:
+                    crawl.threads[worker].keep_pulling = False
+                break
+        time.sleep(1)
+        print("[*] Spider done.")
         sys.exit(0)
     crawl.start()
     # TODO: integrate the handler logger in the handlers
@@ -71,7 +82,7 @@ if __name__ == "__main__":
     application = tornado.web.Application(
         [
         (r"/", SearchHandler, dict(database=crawl.get_storage(),parser=search_parser,options=OPTIONS,logger=handler_logger)),
-        (r"/suggest", SuggestionsHandler, dict(search=crawl.get_storage().get_search_collection())),
+        (r"/suggest", SuggestionsHandler, dict(search=crawl.get_storage().get_search_collection(),options=OPTIONS)),
         (r"/status", StatusHandler, dict(crawler=crawl))
         ],
         serve_traceback=True,

@@ -52,12 +52,13 @@ class Crawler(threading.Thread):
         """
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
+        tasks = []
         for thread in range(0, self.max_threads):
             # Spawn and start the threads
             self.threads[thread] = Worker(self.options, self.logger,
              self.queue, self.storage, self.parser, self.addToQueue)
-            self.loop.create_task(self.threads[thread].begin())
-        self.loop.run_forever()
+            tasks.append(self.threads[thread].begin())
+        self.loop.run_until_complete(asyncio.gather(*tasks))
 
 
 
@@ -72,9 +73,10 @@ class Worker():
         self.parser = parser # page parser
         self.storage = storage # storage for storing data
         self.robots = {} # {"domain":[robotparser, urls since last]}
+        self.keep_pulling = True
 
 
-    def isIdle():
+    def isIdle(self):
         return self.current_url == "Idle"
 
 
@@ -111,7 +113,7 @@ class Worker():
 
 
     async def begin(self):
-        while True:
+        while self.keep_pulling:
             try:
                 if len(self.addToQ) > 0:
                     pendingQ = self.addToQ.pop()
