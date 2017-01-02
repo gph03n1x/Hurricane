@@ -3,13 +3,13 @@
 from datetime import datetime, timedelta
 # Third party libraries
 import pymongo
-# Engine libraries
-from engine.config import fetch_options
+
 
 class MongoDBRecorder(object):
-    def __init__(self, logger):
-        self.options = fetch_options()
+    def __init__(self, logger, options):
         self.logger = logger
+        self.options = options
+
         try:
             CLIENT = pymongo.MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
             self.lists = CLIENT[self.options['mongo']['database']][self.options['mongo']['data-collection']]

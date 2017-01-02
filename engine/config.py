@@ -22,7 +22,13 @@ def fetch_options(cfg_file="hurricane.cfg"):
     for sect in config.sections():
         options[sect] = {}
         for option in config.options(sect):
-            options[sect][option] = config.get(sect, option)
+            # If it is a number we will attempt to convert to int
+            try:
+                value = int(config.get(sect, option))
+            except ValueError:
+                value = config.get(sect, option)
+
+            options[sect][option] = value
             if sect == "regexes":
                 options[sect][option] = re.compile(options[sect][option], re.VERBOSE | re.MULTILINE)
 

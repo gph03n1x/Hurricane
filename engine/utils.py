@@ -30,7 +30,6 @@ def detect_language(text):
     return detected_language
 
 
-
 def gather_robots_txt(domain):
     robots = http_checker(domain) + "/robots.txt"
     try:

@@ -11,23 +11,22 @@ from pymongo import MongoClient
 # Engine libraries
 from engine.filters import *
 from engine.utils import gather_robots_txt
-from engine.config import fetch_options
 from engine.parser import PageParser
 from engine.storage import MongoDBRecorder
 from engine.utils import construct_logger
 
 
 class Crawler(threading.Thread):
-    def __init__(self, max_threads, max_depth):
+    def __init__(self, options):
         super(Crawler, self).__init__()
         self.addToQueue = []
         self.queue = asyncio.Queue()
         self.threads = {}
-        self.max_threads = max_threads
-        self.max_depth = max_depth
+        self.options = options
+        self.max_threads = self.options["crawler"]["threads"]
         self.logger = construct_logger("data/logs/crawler")
-        self.storage = MongoDBRecorder(self.logger)
-        self.parser = PageParser(self.logger)
+        self.storage = MongoDBRecorder(self.logger, self.options)
+        self.parser = PageParser(self.logger, self.options)
 
 
     def get_storage(self):
@@ -55,7 +54,7 @@ class Crawler(threading.Thread):
         asyncio.set_event_loop(self.loop)
         for thread in range(0, self.max_threads):
             # Spawn and start the threads
-            self.threads[thread] = Worker(self.max_depth, self.logger,
+            self.threads[thread] = Worker(self.options, self.logger,
              self.queue, self.storage, self.parser, self.addToQueue)
             self.loop.create_task(self.threads[thread].begin())
         self.loop.run_forever()
@@ -63,16 +62,20 @@ class Crawler(threading.Thread):
 
 
 class Worker():
-    def __init__(self, max_depth, logger, queue, storage, parser, addToQ):
+    def __init__(self, options, logger, queue, storage, parser, addToQ):
         self.addToQ = addToQ
-        self.max_depth = int(max_depth)
+        self.options = options
+        self.max_depth = self.options["crawler"]["depth"]
         self.current_url = "Idle"
         self.logger = logger
         self.queue = queue # url queue
         self.parser = parser # page parser
         self.storage = storage # storage for storing data
-        self.options = fetch_options()
         self.robots = {} # {"domain":[robotparser, urls since last]}
+
+
+    def isIdle():
+        return self.current_url == "Idle"
 
 
     def should_ignore(self, url):

@@ -4,14 +4,13 @@ import re
 import logging
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
-from engine.config import fetch_options
 from engine.utils import detect_language
 
 
 class PageParser(object):
-    def __init__(self, logger):
+    def __init__(self, logger, options):
         self.logger = logger
-        self.options = fetch_options()
+        self.options = options
 
 
     def pull_urls(self, page):
