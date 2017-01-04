@@ -32,10 +32,12 @@ class PageParser(object):
         title = ""
         if hasattr(soup.title, 'title'):
             title = soup.title.text
+            
 
         page = soup.get_text()
         page = re.sub(self.options['regexes']['split'] , " ", page)
-        self.logger.debug(detect_language(page))
+        language = detect_language(page)
+        # TODO: store the language too
         return page, title
 
 
@@ -48,8 +50,6 @@ class SearchParser(object):
 
 
     def parse_input(self, user_input):
-        # TODO: detect language
-        self.logger.debug(detect_language(user_input))
         page = self.pattern.sub(" ", user_input)
 
         return page
