@@ -5,7 +5,7 @@ import nltk
 import itertools
 
 
-class description():
+class Description():
     def __init__(self):
         self.treebank = nltk.tokenize.treebank.TreebankWordTokenizer()
 

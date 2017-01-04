@@ -37,36 +37,48 @@ class MongoDBRecorder(object):
             self.search.insert(record)
 
 
+    def _url_split(self, url):
+        return url.split("//", 1)
+
+
     def record_url(self, url):
+        protocol, url = self._url_split(url)
+        # Check https: http:
         urls = self.lists.find({"url": str(url)})
         if urls.count() == 0:
             # If a url is not recorded, then we can crawl it
             return True
         if urls.count() == 1:
-            time_passed = datetime.now() - urls[0]["time_scanned"] # get how much time
+            # Count how much time passed since it was last scanned
+            time_passed = datetime.now() - urls[0]["time_scanned"]
             # passed since this url was last scanned
             if time_passed > timedelta(days=int(self.options['mongo']['old-urls'])):
                 return True
         return False
 
 
-    def record_db(self, data, url, title):
+    def record_db(self, data, url, title, language):
         # Update the database with url and data
         try:
-
-            data_list = {"data": data, "url": url, "time_scanned": datetime.now(), "title": title}
+            protocol, url = self._url_split(url)
+            data_list = {"data": data, "url": url, "title": title,
+             "time_scanned": datetime.now(), "lang":language,
+              "protocol":protocol}
             list_result = self.lists.find({"url": url})
             if list_result.count() == 0:
                 self.lists.insert(data_list)
             else:
-                self.lists.update( # Update the time this url was scanned and allow a rescan
+                # Update the time this url was scanned
+                self.lists.update(
                     {'_id':list_result[0]['_id']},
                     {
                         "$set": {
                             "data": data,
                             "urls": url,
                             "time_scanned": datetime.now(),
-                            "title": title
+                            "title": title,
+                            "lang":language,
+                            "protocol":protocol
                         }
                     }, upsert=False)
         except Exception:

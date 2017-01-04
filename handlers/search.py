@@ -9,7 +9,7 @@ import tornado.escape as esc
 import engine.config
 from engine.parser import SearchParser
 from engine.filters import http_checker
-from engine.filters import nltk_description
+from engine.nltk_wrappers import Description
 
 
 class SearchHandler(tornado.web.RequestHandler):
@@ -18,6 +18,7 @@ class SearchHandler(tornado.web.RequestHandler):
         self.parser = parser
         self.options = options
         self.logger = logger
+        self.description = Description()
 
 
     def get(self):
@@ -50,23 +51,24 @@ class SearchHandler(tornado.web.RequestHandler):
         except tornado.web.MissingArgumentError:
             self.render("main.html", results=matched_results, search=self.get_argument('search_string'), qTime=qTime)
         else:
-            self.render("response.html", results=matched_results)
+            self.render("response.html", results=matched_results, qTime=qTime)
 
 
     def search(self, search_input):
         search_string = self.parser.parse_input(search_input.lower())
-        search_string = re.sub(re.compile(r'\s+'), " ", search_string)
+        search_string = re.sub(self.options['regexes']['split'], " ", search_string)
         # TODO: optimize this a bit.
 
         start = time.time()
         matched_results = []
         for match in self.database.lists.find({ "$text": { "$search": search_string } }).limit(self.options['app']['results-limit']):
-            res = nltk_description(match['data'], search_string, self.options['nltk']['left-margin'], self.options['nltk']['right-margin'],
+            res = self.description.fetch_description(match['data'], search_string, self.options['nltk']['left-margin'], self.options['nltk']['right-margin'],
             self.options['nltk']['concordance-results'])
             match['data'] = self.escape_and_bold(res, search_string)
             match['title'] = esc.xhtml_escape(match['title'])
-            # TODO: add this to cfg
-            match['title'] = re.sub(r"&.[^\s||;||&]{0,};", "", match['title'])
+            match['title'] = re.sub(self.options['regexes']['title-clean'], "", match['title'])
+            match['url'] = "{0}{1}{2}".format(match['protocol'], "//", match["url"])
+
 
             matched_results.append(match)
 

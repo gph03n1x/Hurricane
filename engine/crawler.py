@@ -43,7 +43,11 @@ class Crawler(threading.Thread):
         to add it asynchronously when a worker will go Idle
         """
         if url_validator(website_url):
-            self.addToQueue.append((remove_backslash(website_url), 0)) # Add a url in the queue
+            # Add a url in the queue
+            self.addToQueue.append((remove_backslash(website_url), 0))
+
+    async def need_update():
+        pass
 
 
     def run(self):
@@ -53,6 +57,7 @@ class Crawler(threading.Thread):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         tasks = []
+        # TODO: Create a worker with role = 1
         for thread in range(0, self.max_threads):
             # Spawn and start the threads
             self.threads[thread] = Worker(self.options, self.logger,
@@ -63,7 +68,7 @@ class Crawler(threading.Thread):
 
 
 class Worker():
-    def __init__(self, options, logger, queue, storage, parser, addToQ):
+    def __init__(self, options, logger, queue, storage, parser, addToQ, role=0):
         self.addToQ = addToQ
         self.options = options
         self.max_depth = self.options["crawler"]["depth"]
@@ -74,19 +79,11 @@ class Worker():
         self.storage = storage # storage for storing data
         self.robots = {} # {"domain":[robotparser, urls since last]}
         self.keep_pulling = True
+        self.role = role
 
 
     def isIdle(self):
         return self.current_url == "Idle"
-
-
-    def should_ignore(self, url):
-        # Find a better method for staff like
-        # static/greyindex.css?v=893e07cd07891c47f58b0a256b82ac7b
-        for extension in self.options['crawler']['ignore-extensions'].split(','):
-            if url.endswith("."+extension):
-                return True
-        return False
 
 
     def can_record(self):
@@ -101,7 +98,7 @@ class Worker():
                 self.robots[robot_domain][1] = 0
                 continue
             self.robots[robot_domain][1] += 1
-            if self.robots[robot_domain][1] > int(self.options['crawler']['unload-robots']):
+            if self.robots[robot_domain][1] > self.options['crawler']['unload-robots']:
                 del self.robots[robot_domain]
 
         if self.robots[domain][0]:
@@ -115,6 +112,7 @@ class Worker():
     async def begin(self):
         while self.keep_pulling:
             try:
+                # TODO: only a master worker should be able to add to
                 if len(self.addToQ) > 0:
                     pendingQ = self.addToQ.pop()
                     await self.queue.put(pendingQ)
@@ -133,6 +131,7 @@ class Worker():
 
     async def work(self, queue_item):
         # queue_item[0] is the url, queue_item[1] is the depth
+        # TODO: need to lock it , since some times the
         self.current_url = queue_item[0]
         self.depth = queue_item[1]
         if len(queue_item) > 2:
@@ -175,31 +174,32 @@ class Worker():
                     self.urls = self.parser.pull_urls(self.data) # Fetch all urls from the webpage
                     #self.urls = filter(None, self.urls)
                     try: # If the webpage has a charset set
-                        self.data, title = self.parser.parse_page(self.data.lower()) # Parse a decoded webpage
-                    except (TypeError, UnicodeDecodeError): # If an exception is raised
-                        self.data, title  = self.parser.parse_page(self.data.decode('utf-8').lower()) # parsing with utf-8 decoded
+                        # Parse a decoded webpage
+                        self.data, title, language = self.parser.parse_page(self.data.lower())
+                    except (TypeError, UnicodeDecodeError):
+                        # If an exception is raised
+                        # parsing with utf-8 decoded
+                        self.data, title, language  = self.parser.parse_page(self.data.decode('utf-8').lower())
 
                     # Record the results
-                    self.storage.record_db(self.data, self.current_url, title)
+                    self.storage.record_db(self.data, self.current_url, title, language)
 
                     # Add the urls found in the webpage
                     for url in self.urls:
                         fixed_url = complete_domain(crop_fragment_identifier(url), self.current_url)
-                        # self.logger.debug(str((fixed_url,url_validator(fixed_url),self.should_ignore(fixed_url))))
                         if not fixed_url:
                             # if url is empty '' no need to work with it
                             continue
                         if not url_validator(fixed_url):
                             # if url is invalid we can go on
                             continue
-                        if self.should_ignore(fixed_url):
-                            # if url is media or stylesheet we can go on
-                            continue
 
                         if self.depth + 1 <= self.max_depth and self.storage.record_url(fixed_url):
-                            # If the url doesnt exceed 2 depth and isn't already scanned
+                            # If the url doesnt exceed depth
+                            # and isn't already scanned
+                            # Add the url to the queue and increase the depth
                             await self.queue.put((fixed_url ,
-                                            self.depth + 1)) # Add the url to the queue and increase the depth
+                                            self.depth + 1))
 
         except Exception:
             self.logger.debug(self.current_url)
