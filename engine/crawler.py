@@ -57,8 +57,10 @@ class Crawler(threading.Thread):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         tasks = []
-        # TODO: Create a worker with role = 1
-        for thread in range(0, self.max_threads):
+        self.threads[0] = Worker(self.options, self.logger,
+         self.queue, self.storage, self.parser, self.addToQueue, role=1)
+        tasks.append(self.threads[0].begin())
+        for thread in range(1, self.max_threads):
             # Spawn and start the threads
             self.threads[thread] = Worker(self.options, self.logger,
              self.queue, self.storage, self.parser, self.addToQueue)
@@ -112,8 +114,9 @@ class Worker():
     async def begin(self):
         while self.keep_pulling:
             try:
-                # TODO: only a master worker should be able to add to
-                if len(self.addToQ) > 0:
+                # TODO: need to check if the other workers
+                # are looking at the same url.
+                if self.role == 1 and len(self.addToQ) > 0:
                     pendingQ = self.addToQ.pop()
                     await self.queue.put(pendingQ)
 
@@ -131,7 +134,7 @@ class Worker():
 
     async def work(self, queue_item):
         # queue_item[0] is the url, queue_item[1] is the depth
-        # TODO: need to lock it , since some times the
+
         self.current_url = queue_item[0]
         self.depth = queue_item[1]
         if len(queue_item) > 2:

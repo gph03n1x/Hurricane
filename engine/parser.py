@@ -20,7 +20,6 @@ class PageParser(object):
 
 
     def parse_page(self, page):
-        # TODO: detect language
         # Remove unnecessary characters
         page = re.sub(self.options['regexes']['escape'] , "", page)
         page = re.sub(self.options['regexes']['split'] , " ", page)
@@ -37,7 +36,6 @@ class PageParser(object):
         page = soup.get_text()
         page = re.sub(self.options['regexes']['split'] , " ", page)
         language = detect_language(page)
-        # TODO: store the language too
         return page, title, language
 
 
