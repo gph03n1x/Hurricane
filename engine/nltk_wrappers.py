@@ -1,8 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import itertools
 # Third party libraries
 import nltk
-import itertools
+from nltk.corpus import stopwords
+
+
+
+def detect_language(text):
+    # TODO: This uses the stopwords not good enough against
+    # an advanced user
+    detected_language = "unknown"
+    max_score = 0
+    tokens = nltk.wordpunct_tokenize(text)
+    words = [word.lower() for word in tokens]
+    for language in stopwords.fileids():
+        stopwords_set = set(stopwords.words(language))
+        words_set = set(words)
+        common_elements = words_set.intersection(stopwords_set)
+        if len(common_elements) > max_score:
+            detected_language = language
+            max_score = len(common_elements)
+
+    return detected_language
 
 
 class Description():

@@ -4,7 +4,7 @@ import re
 import logging
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
-from engine.utils import detect_language
+from engine.nltk_wrappers import detect_language
 
 
 class PageParser(object):

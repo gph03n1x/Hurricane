@@ -20,3 +20,6 @@ python app.py
 ### Screenshots
 [Search page](http://i.imgur.com/F2kgFcA.png)
 [Status page](http://i.imgur.com/B9lRyLk.png)
+
+### Frontend
+This project uses bootstrap for its frontend

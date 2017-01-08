@@ -41,7 +41,7 @@
   <div class="col-md-7">
     <div id="container">
     {% for result in results %}
-            <div class="panel panel-default">
+            <div class="panel {% if result['protocol'] == 'https:' %} panel-success {% else %} panel-default {% end %}">
                 <div class="panel-heading">
                     <a href="{{ escape(result['url']) }}"><h4>{{ escape(result['title']) }}</h4></a>
                 </div>
