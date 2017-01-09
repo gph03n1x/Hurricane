@@ -6,14 +6,21 @@ import time
 import tornado.web
 import tornado.escape as esc
 # Engine libraries
-import engine.config
-from engine.parser import SearchParser
-from engine.filters import http_checker
 from engine.nltk_wrappers import Description
 
 
 class SearchHandler(tornado.web.RequestHandler):
     def initialize(self, database, parser, options, logger):
+        """
+        Initializes the database with parameters
+        pointing to the database, parser , options dictionary
+        and the logger the handler is going to use.
+        :param database:
+        :param parser:
+        :param options:
+        :param logger:
+        :return:
+        """
         self.database = database
         self.parser = parser
         self.options = options
@@ -22,7 +29,12 @@ class SearchHandler(tornado.web.RequestHandler):
 
 
     def get(self):
-        # Show an empty webpage ready to search
+        """
+        Renders the main page.
+        If there is a GET argument search then
+        the main page also has results on it.
+        :return:
+        """
         try:
             self.get_argument('search')
         except tornado.web.MissingArgumentError:
@@ -33,6 +45,12 @@ class SearchHandler(tornado.web.RequestHandler):
 
 
     def bold_(self, word):
+        """
+        Takes a word escapes it and
+        adds strong tags around it
+        :param word:
+        :return: escaped bold word
+        """
         return "{0}{1}{2}".format("<strong>",esc.xhtml_escape(word),"</strong>")
 
 
@@ -47,6 +65,7 @@ class SearchHandler(tornado.web.RequestHandler):
         matched_results, qTime = self.search(self.get_argument('search_string'))
 
         try:
+            # TODO: create an API handler
             self.get_argument('nohtml')
         except tornado.web.MissingArgumentError:
             self.render("main.html", results=matched_results, search=self.get_argument('search_string'), qTime=qTime)

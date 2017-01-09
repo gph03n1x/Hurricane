@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os
 import sys
 import time
 import os.path
 import argparse
+from os import mkdir
 # Third party libraries
 import nltk
 import tornado.ioloop
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         nltk.download("punkt")
 
     if not os.path.exists("data/logs"):
-        os.mkdir("data/logs")
+        mkdir("data/logs")
 
     if not os.path.isfile("hurricane.cfg"):
         print("[-] Please rename hurricane.cfg.example to hurricane.cfg")
