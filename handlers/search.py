@@ -49,12 +49,19 @@ class SearchHandler(tornado.web.RequestHandler):
         Takes a word escapes it and
         adds strong tags around it
         :param word:
-        :return: escaped bold word
+        :return: String
         """
         return "{0}{1}{2}".format("<strong>",esc.xhtml_escape(word),"</strong>")
 
 
     def escape_and_bold(self, data, search_string):
+        """
+        Takes the description and bolds every word that
+        is part of the search_string.
+        :param data:
+        :param search_string:
+        :return: String
+        """
         data = esc.xhtml_escape(data)
         for word in search_string.split():
             data = data.replace(word, self.bold_(word))
@@ -74,6 +81,13 @@ class SearchHandler(tornado.web.RequestHandler):
 
 
     def search(self, search_input):
+        """
+        Searches the database for data associated with the input
+        :param search_input:
+        :return:
+         List: [{"data": "...", "url": "...", },]
+         Float: qTime
+        """
         search_string = self.parser.parse_input(search_input.lower())
         search_string = re.sub(self.options['regexes']['split'], " ", search_string)
         # TODO: optimize this a bit.

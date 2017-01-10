@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import logging
 import threading
 import urllib.error
-from time import sleep
 import asyncio
 # Third party libraries
 import aiohttp
-from pymongo import MongoClient
 # Engine libraries
 from engine.filters import *
 from engine.utils import gather_robots_txt
@@ -28,27 +25,33 @@ class Crawler(threading.Thread):
         self.storage = MongoDBRecorder(self.logger, self.options)
         self.parser = PageParser(self.logger, self.options)
 
-
     def get_storage(self):
+        """
+        Returns the storage associated with the crawler
+        :return: engine.storage.MongoDBRecorder object
+        """
         return self.storage
 
-
     def get_logger(self):
+        """
+        Returns the logger associated with the crawler
+        :return: logging.Logger object
+        """
         return self.logger
-
 
     def add_website(self, website_url):
         """
-        Adding a webpage to addToQueue List in order
+        Adding a web page to addToQueue List in order
         to add it asynchronously when a worker will go Idle
+        :param website_url:
+        :return:
         """
         if url_validator(website_url):
             # Add a url in the queue
             self.addToQueue.append((remove_backslash(website_url), 0))
 
-    async def need_update():
+    async def need_update(self):
         pass
-
 
     def run(self):
         """
@@ -70,8 +73,8 @@ class Crawler(threading.Thread):
 
 
 class Worker():
-    def __init__(self, options, logger, queue, storage, parser, addToQ, role=0):
-        self.addToQ = addToQ
+    def __init__(self, options, logger, queue, storage, parser, addtoq, role=0):
+        self.addToQ = addtoq
         self.options = options
         self.max_depth = self.options["crawler"]["depth"]
         self.current_url = "Idle"
