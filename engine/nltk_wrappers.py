@@ -6,7 +6,6 @@ import nltk
 from nltk.corpus import stopwords
 
 
-
 def detect_language(text):
     # TODO: This uses the stopwords not good enough against
     # an advanced user
@@ -25,13 +24,11 @@ def detect_language(text):
     return detected_language
 
 
-class Description():
+class Description:
     def __init__(self):
         self.treebank = nltk.tokenize.treebank.TreebankWordTokenizer()
 
-
-    def fetch_description(self, given_description, given_words, left_margin,
-     right_margin, num_of_results):
+    def fetch_description(self, given_description, given_words, left_margin, right_margin, num_of_results):
         """
         Creates a description focusing on the search words.
         """
@@ -45,8 +42,10 @@ class Description():
         tokens = self.treebank.tokenize(given_description)
 
         text = nltk.Text(tokens)
-        c = nltk.ConcordanceIndex(tokens, key = lambda s: s.lower())
-        concordance_txt = ([[text.tokens[list(map(lambda x: x-left_margin if (x-left_margin)>0 else left_margin-x,[offset]))[0]:offset+right_margin+1]
-                            for offset in c.offsets(given_word)][:num_of_results] for given_word in given_words.split()])
+        c = nltk.ConcordanceIndex(tokens, key=lambda s: s.lower())
+        concordance_txt = ([[text.tokens[list(map(lambda x: x-left_margin if (x-left_margin) > 0 else left_margin-x,
+                                                  [offset]))[0]:offset+right_margin+1]
+                            for offset in c.offsets(given_word)][:num_of_results]
+                            for given_word in given_words.split()])
         concordance_txt = itertools.chain(*concordance_txt)
         return '\n'.join([''.join([x+' ' for x in con_sub]) for con_sub in concordance_txt])

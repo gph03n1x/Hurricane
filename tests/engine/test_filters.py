@@ -1,23 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import unittest
-from engine.filters import *
+from engine.filters import crop_fragment_identifier, remove_backslash, http_checker
 
 
 class TestFilters(unittest.TestCase):
     # TODO: add tests for the rest of the functions
-    def test_nltk_description(self):
-        tests = {
-            "one more cipher based on the vigenere encryption in a more hardened version":["vigenere", 3, 3, 1, "based on the vigenere encryption in a "]
-        }
-        for test in tests:
-            self.assertEqual(
-                nltk_description(test,
-                 tests[test][0], tests[test][1], tests[test][2],
-                  tests[test][3]
-                ),
-                 tests[test][4]
-            )
 
     def test_crop_fragment_identifier(self):
         urls = {
@@ -35,6 +23,24 @@ class TestFilters(unittest.TestCase):
         }
         for url in urls:
             self.assertEqual(remove_backslash(url), urls[url])
+
+    def test_http_checker(self):
+        urls = {
+            "//test.website.com": "http://test.website.com",
+            "www.website.com/about": "http://www.website.com/about",
+            "https://google.com": "https://google.com"
+        }
+        for url in urls:
+            self.assertEqual(http_checker(url), urls[url])
+
+    def test_url_to_domain(self):
+        pass
+
+    def test_url_validator(self):
+        pass
+
+    def test_complete_domain(self):
+        pass
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestFilters)

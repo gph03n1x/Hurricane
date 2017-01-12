@@ -14,7 +14,7 @@ concordance-results = 2
 # MongoDB host, port, database settings that the application is going to use
 host = 127.0.0.1
 port = 27017
-database = test
+database = hurricane
 # data-collection is the name of the mongoDB collection which has
 # data from each scanned url in the following format
 # {"data": "....", "url": "....", "time_scanned": ISODate("....")}

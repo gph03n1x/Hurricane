@@ -17,29 +17,25 @@ class MongoDBRecorder(object):
             self.db = CLIENT[self.options['mongo']['database']]
             self.lists.create_index( [("data", pymongo.TEXT)] )
             self.search.create_index( [("search", pymongo.TEXT)] )
-        except Exception as mongo_error:
+        except pymongo.errors.ConnectionFailure:
             print("[-] Database Error , exitting ...")
             self.logger.exception("mongo_recorder::__init__")
             exit()
 
-
     def get_lists_collection(self):
         return self.lists
 
-
     def get_search_collection(self):
         return self.search
-
 
     def record_search(self, search_string):
         record = {"search": search_string}
         if self.search.find(record).count() == 0:
             self.search.insert(record)
 
-
     def _url_split(self, url):
+        # TODO: should move to filters
         return url.split("//", 1)
-
 
     def record_url(self, url):
         protocol, url = self._url_split(url)
@@ -82,4 +78,5 @@ class MongoDBRecorder(object):
                         }
                     }, upsert=False)
         except Exception:
+            self.logger.debug(data_list)
             self.logger.exception('mongo_recorder::record_db')
