@@ -64,10 +64,10 @@ if __name__ == "__main__":
         while True:
             stop = True
             for worker in crawl.threads:
-                if not crawl.threads[worker].isIdle():
+                if not crawl.threads[worker].is_idle():
                     stop = False
 
-            if stop == True:
+            if stop is True:
                 for worker in crawl.threads:
                     crawl.threads[worker].keep_pulling = False
                 break
@@ -81,9 +81,11 @@ if __name__ == "__main__":
 
     application = tornado.web.Application(
         [
-        (r"/", SearchHandler, dict(database=crawl.get_storage(),parser=search_parser,options=OPTIONS,logger=handler_logger)),
-        (r"/suggest", SuggestionsHandler, dict(search=crawl.get_storage().get_search_collection(),options=OPTIONS)),
-        (r"/status", StatusHandler, dict(crawler=crawl))
+            (r"/", SearchHandler, dict(database=crawl.get_storage(),
+                                       parser=search_parser, options=OPTIONS, logger=handler_logger)),
+            (r"/suggest", SuggestionsHandler, dict(search=crawl.get_storage().get_search_collection(),
+                                                   options=OPTIONS)),
+            (r"/status", StatusHandler, dict(crawler=crawl))
         ],
         serve_traceback=True,
         template_path=os.path.join(os.path.dirname(__file__), "templates"),

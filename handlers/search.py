@@ -27,7 +27,6 @@ class SearchHandler(tornado.web.RequestHandler):
         self.logger = logger
         self.description = Description()
 
-
     def get(self):
         """
         Renders the main page.
@@ -40,19 +39,17 @@ class SearchHandler(tornado.web.RequestHandler):
         except tornado.web.MissingArgumentError:
             self.render("main.html", results=[], search="", qTime="0")
         else:
-            matched_results, qTime = self.search(self.get_argument('search'))
-            self.render("main.html", results=matched_results, search=self.get_argument('search'), qTime=qTime)
+            matched_results, q_time = self.search(self.get_argument('search'))
+            self.render("main.html", results=matched_results, search=self.get_argument('search'), qTime=q_time)
 
-
-    def bold_(self, word):
+    def __bold(self, word):
         """
         Takes a word escapes it and
         adds strong tags around it
         :param word:
         :return: String
         """
-        return "{0}{1}{2}".format("<strong>",esc.xhtml_escape(word),"</strong>")
-
+        return "{0}{1}{2}".format("<strong>", esc.xhtml_escape(word), "</strong>")
 
     def escape_and_bold(self, data, search_string):
         """
@@ -64,21 +61,19 @@ class SearchHandler(tornado.web.RequestHandler):
         """
         data = esc.xhtml_escape(data)
         for word in search_string.split():
-            data = data.replace(word, self.bold_(word))
+            data = data.replace(word, self.__bold(word))
         return data
 
-
     def post(self):
-        matched_results, qTime = self.search(self.get_argument('search_string'))
+        matched_results, q_time = self.search(self.get_argument('search_string'))
 
         try:
             # TODO: create an API handler
             self.get_argument('nohtml')
         except tornado.web.MissingArgumentError:
-            self.render("main.html", results=matched_results, search=self.get_argument('search_string'), qTime=qTime)
+            self.render("main.html", results=matched_results, search=self.get_argument('search_string'), qTime=q_time)
         else:
-            self.render("response.html", results=matched_results, qTime=qTime)
-
+            self.render("response.html", results=matched_results, qTime=q_time)
 
     def search(self, search_input):
         """
@@ -86,7 +81,7 @@ class SearchHandler(tornado.web.RequestHandler):
         :param search_input:
         :return:
          List: [{"data": "...", "url": "...", },]
-         Float: qTime
+         Float: q_time
         """
         search_string = self.parser.parse_input(search_input.lower())
         search_string = re.sub(self.options['regexes']['split'], " ", search_string)
@@ -94,19 +89,21 @@ class SearchHandler(tornado.web.RequestHandler):
 
         start = time.time()
         matched_results = []
-        for match in self.database.lists.find({ "$text": { "$search": search_string } }).limit(self.options['app']['results-limit']):
-            res = self.description.fetch_description(match['data'], search_string, self.options['nltk']['left-margin'], self.options['nltk']['right-margin'],
-            self.options['nltk']['concordance-results'])
+        for match in self.database.lists.find({"$text": {"$search": search_string}}).limit(
+                self.options['app']['results-limit']):
+            res = self.description.fetch_description(match['data'], search_string,
+                                                     self.options['nltk']['left-margin'],
+                                                     self.options['nltk']['right-margin'],
+                                                     self.options['nltk']['concordance-results'])
             match['data'] = self.escape_and_bold(res, search_string)
             match['title'] = esc.xhtml_escape(match['title'])
             match['title'] = re.sub(self.options['regexes']['title-clean'], "", match['title'])
             match['url'] = "{0}{1}{2}".format(match['protocol'], "//", match["url"])
 
-
             matched_results.append(match)
 
-        qTime = str(time.time() - start)
+        q_time = str(time.time() - start)
         if len(matched_results) > 0:
             self.database.record_search(search_input)
 
-        return matched_results, qTime
+        return matched_results, q_time

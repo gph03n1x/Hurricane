@@ -24,6 +24,7 @@ class Crawler(threading.Thread):
         self.logger = construct_logger("data/logs/crawler")
         self.storage = MongoDBRecorder(self.logger, self.options)
         self.parser = PageParser(self.logger, self.options)
+        self.loop = None
 
     def get_storage(self):
         """
@@ -56,46 +57,44 @@ class Crawler(threading.Thread):
     def run(self):
         """
         Constructs an event loop and adds a number of workers
+        :return:
         """
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         tasks = []
         self.threads[0] = Worker(self.options, self.logger,
-         self.queue, self.storage, self.parser, self.addToQueue, role=1)
+                                 self.queue, self.storage, self.parser, self.addToQueue, role=1)
         tasks.append(self.threads[0].begin())
         for thread in range(1, self.max_threads):
             # Spawn and start the threads
             self.threads[thread] = Worker(self.options, self.logger,
-             self.queue, self.storage, self.parser, self.addToQueue)
+                                          self.queue, self.storage, self.parser, self.addToQueue)
             tasks.append(self.threads[thread].begin())
         self.loop.run_until_complete(asyncio.gather(*tasks))
 
 
-
-class Worker():
+class Worker:
     def __init__(self, options, logger, queue, storage, parser, addtoq, role=0):
         self.addToQ = addtoq
         self.options = options
         self.max_depth = self.options["crawler"]["depth"]
         self.current_url = "Idle"
         self.logger = logger
-        self.queue = queue # url queue
-        self.parser = parser # page parser
-        self.storage = storage # storage for storing data
-        self.robots = {} # {"domain":[robotparser, urls since last]}
+        self.queue = queue  # url queue
+        self.parser = parser  # page parser
+        self.storage = storage  # storage for storing data
+        self.robots = {}  # {"domain":[ robotparser, urls since last]}
         self.keep_pulling = True
         self.role = role
 
-
-    def isIdle(self):
+    def is_idle(self) -> bool:
         return self.current_url == "Idle"
-
 
     def can_record(self):
         # store in a dict or array and after a number of urls remove it
         domain = url_to_domain(self.current_url)
         domains = list(self.robots.keys())
-        if not domain in self.robots:
+        if domain not in self.robots:
             self.robots[domain] = [gather_robots_txt(domain), 0]
 
         for robot_domain in domains:
@@ -113,19 +112,18 @@ class Worker():
             )
         return True
 
-
     async def begin(self):
         while self.keep_pulling:
             try:
                 # TODO: need to check if the other workers
                 # are looking at the same url.
                 if self.role == 1 and len(self.addToQ) > 0:
-                    pendingQ = self.addToQ.pop()
-                    await self.queue.put(pendingQ)
+                    pending_q = self.addToQ.pop()
+                    await self.queue.put(pending_q)
 
                 if not self.queue.empty():
                     item = await self.queue.get()
-                    await self.work(item) # crawl the item
+                    await self.work(item)  # crawl the item
                 else:
                     # Let the thread go idle until a new item comes up
                     # and set its status as Idle
@@ -134,12 +132,11 @@ class Worker():
             except Exception:
                 self.logger.exception('Worker::run')
 
-
     async def work(self, queue_item):
         # queue_item[0] is the url, queue_item[1] is the depth
 
         self.current_url = queue_item[0]
-        self.depth = queue_item[1]
+        depth = queue_item[1]
         if len(queue_item) > 2:
             await asyncio.sleep(queue_item[2])
         try:
@@ -162,7 +159,7 @@ class Worker():
                     # url next time if we haven't done already ourselves
                     # self.logger.error("HTTPError: " + self.current_url)
                     if not (len(queue_item) > 2):
-                        await self.queue.put((self.current_url, self.depth, 1))
+                        await self.queue.put((self.current_url, depth, 1))
                 else:
                     # self.logger.debug("Done: " + self.current_url)
                     url_content_type = self.url.headers['content-type']
@@ -177,7 +174,7 @@ class Worker():
                     # Closing the request and the session
                     self.url.close()
                     session.close()
-                    self.urls = self.parser.pull_urls(self.data) # Fetch all urls from the webpage
+                    self.urls = self.parser.pull_urls(self.data)  # Fetch all urls from the webpage
                     #self.urls = filter(None, self.urls)
                     try: # If the webpage has a charset set
                         # Parse a decoded webpage
@@ -200,12 +197,12 @@ class Worker():
                             # if url is invalid we can go on
                             continue
 
-                        if self.depth + 1 <= self.max_depth and self.storage.record_url(fixed_url):
+                        if depth + 1 <= self.max_depth and self.storage.record_url(fixed_url):
                             # If the url doesnt exceed depth
                             # and isn't already scanned
                             # Add the url to the queue and increase the depth
                             await self.queue.put((fixed_url ,
-                                            self.depth + 1))
+                                            depth + 1))
 
         except Exception:
             self.logger.debug(self.current_url)
