@@ -13,6 +13,18 @@ pip install -r requirements.txt
 Rename the hurricane.cfg.example to hurricane.cfg
 and change the settings.
 
+The first time you run it you have to download the
+stopwords and punkt nltk packages.
+
+To do that just run it as
+```bash
+python app.py --update
+```
+
+After you download the packages once you don't need
+to provide the --update argument anymore except if you
+want to update the packages.
+
 ```bash
 python app.py
 ```

@@ -12,7 +12,13 @@ class PageParser(object):
         self.logger = logger
         self.options = options
 
-    def pull_urls(self, page):
+    @staticmethod
+    def pull_urls(page):
+        """
+        Pulls all the href links from a web page
+        :param page:
+        :return:
+        """
         soup = BeautifulSoup(page, "html.parser")
         soup.prettify()
         return [anchor['href'] for anchor in soup.findAll('a', href=True)]

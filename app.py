@@ -22,17 +22,14 @@ from handlers.search import SearchHandler
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--update",
-                        help="update nltk collections",
-                        action="store_true")
-    parser.add_argument("--tests", help="run the hurricane unittests",
-                        action="store_true")
+    parser.add_argument("-u", "--update", help="update nltk collections", action="store_true")
+    parser.add_argument("-t", "--tests", help="run the hurricane unittests", action="store_true")
     parser.add_argument("-c", "--config", help="Pass a configure through cmd")
-    parser.add_argument("-s", "--spider",
-                        help="Pass a website you want to crawl only.")
+    parser.add_argument("-s", "--spider", help="Pass a website you want to crawl only.")
     args = parser.parse_args()
 
     if args.tests:
+        print("[+] Starting Tests.")
         import tests
         sys.exit(0)
 
@@ -41,6 +38,7 @@ if __name__ == "__main__":
         nltk.download("punkt")
 
     if not os.path.exists("data/logs"):
+        mkdir("data")
         mkdir("data/logs")
 
     if not os.path.isfile("hurricane.cfg"):

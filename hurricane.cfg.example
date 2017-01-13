@@ -2,6 +2,7 @@
 # Port the application is going to listen for http connections
 port = 8000
 results-limit = 10
+suggestions-limit = 4
 
 [nltk]
 # Left and right margin for getting concordances for description results
@@ -22,6 +23,8 @@ data-collection = lists
 # searches-collection is the collection which includes search inputs
 # in order for the app to recommend suggested searches
 searches-collection = search
+# Collection which will store urls that produced errors during crawling
+errors-collection = errors
 # If (old-urls) days have passed since encountering this url
 # the crawler is going to crawl it again and store it again
 old-urls = 5

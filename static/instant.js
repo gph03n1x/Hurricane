@@ -4,16 +4,13 @@ $( "#search_string" ).on('input', function() {
     setTimeout(make_post, 800, search_input);
 
     $.post( "/suggest", { search_string: search_input}, function( data ) {
-        $( "#autocomplete" ).empty();
-        $( "#autocomplete" ).append( data );
-    });
+        $('#search_string').typeahead('destroy');
+        $('#search_string').typeahead();
+        $("#search_string").typeahead({ source:data });
+
+    },'json');
 
 });
-
-function a_onClick( data ) {
-   $( "#search_string" ).val( data );
-   make_post( data );
-}
 
 function make_post( search_input ) {
     if (search_input.length > 2 && search_input == $( "#search_string" ).val()) {
