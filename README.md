@@ -34,4 +34,7 @@ python app.py
 [Status page](http://i.imgur.com/B9lRyLk.png)
 
 ### Frontend
-This project uses bootstrap for its frontend
+This project uses :
+* [Awesomplete](https://leaverou.github.io/awesomplete/) made by [Lea Verou](http://lea.verou.me/)
+* [Bootstrap](https://getbootstrap.com/)
+

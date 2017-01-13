@@ -36,6 +36,7 @@ if __name__ == "__main__":
     if args.update:
         nltk.download("stopwords")
         nltk.download("punkt")
+        sys.exit(0)
 
     if not os.path.exists("data/logs"):
         mkdir("data")

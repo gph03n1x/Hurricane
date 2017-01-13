@@ -1,13 +1,16 @@
 var url = $(location).attr('href');
+
+
+var input = document.getElementById("search_string");
+var awesomplete = new Awesomplete(input);
+
+
 $( "#search_string" ).on('input', function() {
     var search_input = $( "#search_string" ).val();
     setTimeout(make_post, 800, search_input);
-
+    console.log("Called");
     $.post( "/suggest", { search_string: search_input}, function( data ) {
-        $('#search_string').typeahead('destroy');
-        $('#search_string').typeahead();
-        $("#search_string").typeahead({ source:data });
-
+        awesomplete.list = data;
     },'json');
 
 });

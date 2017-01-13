@@ -5,6 +5,7 @@
     <title>Hurricane</title>
     <link rel="stylesheet" href='{{ static_url("greyindex.css") }}' type="text/css"/>
     <link rel="stylesheet" href='{{ static_url("bootstrap.min.css") }}' type="text/css"/>
+    <link rel="stylesheet" href='{{ static_url("awesomplete.css") }}' type="text/css"/>
 </head>
 <body>
 
@@ -27,7 +28,7 @@
 
       <form class="navbar-form navbar-left" role="search" action="/" method="post">
         <div class="form-group">
-          <input type="text" class="form-control" placeholder="Search.." value="{{ escape(search) }}" id="search_string" name="search_string">
+          <input type="text" class="form-control awesomplete" placeholder="Search.." value="{{ escape(search) }}" id="search_string" name="search_string" data-list="" />
           <h5 style="float:right;margin-left:10px;" id="qTime">Query Time: {{ escape(qTime) }}</h5>
         </div>
 
@@ -52,13 +53,10 @@
     </div>
 
   </div>
-  <div class="col-md-3">
-      <ul class="list-group" role="menu" id="autocomplete">
-      </ul>
-  </div>
 </div>
 
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="{{ static_url('awesomplete.min.js') }}"></script>
 <script src="{{ static_url('instant.js') }}"></script>
 </body>
 </html>
