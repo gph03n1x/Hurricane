@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import re
-import logging
+# Third party libraries
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
+# Engine libraries
 from engine.nltk_wrappers import detect_language
 
 
@@ -42,6 +43,7 @@ class PageParser(object):
         return page, title, language
 
 
+# TODO: change it to stopwords parser
 class SearchParser(object):
     def __init__(self, logger):
         self.logger = logger

@@ -3,6 +3,9 @@
 from urllib.parse import urlparse, urljoin
 
 
+def remove_protocol(url):
+    return url.split("//", 1)
+
 def url_validator(url):
     try:
         result = urlparse(url)

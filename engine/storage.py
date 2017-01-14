@@ -3,6 +3,9 @@
 from datetime import datetime, timedelta
 # Third party libraries
 import pymongo
+import pymongo.errors
+# Engine libraries
+from engine.filters import remove_protocol
 
 
 class MongoDBRecorder(object):
@@ -11,12 +14,12 @@ class MongoDBRecorder(object):
         self.options = options
 
         try:
-            CLIENT = pymongo.MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
-            self.lists = CLIENT[self.options['mongo']['database']][self.options['mongo']['data-collection']]
-            self.search = CLIENT[self.options['mongo']['database']][self.options['mongo']['searches-collection']]
-            self.db = CLIENT[self.options['mongo']['database']]
-            self.lists.create_index( [("data", pymongo.TEXT)] )
-            self.search.create_index( [("search", pymongo.TEXT)] )
+            self.client = pymongo.MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
+            self.lists = self.client[self.options['mongo']['database']][self.options['mongo']['data-collection']]
+            self.search = self.client[self.options['mongo']['database']][self.options['mongo']['searches-collection']]
+            self.db = self.client[self.options['mongo']['database']]
+            self.lists.create_index([("data", pymongo.TEXT)])
+            self.search.create_index([("search", pymongo.TEXT)])
         except pymongo.errors.ConnectionFailure:
             print("[-] Database Error , exitting ...")
             self.logger.exception("mongo_recorder::__init__")
@@ -28,17 +31,18 @@ class MongoDBRecorder(object):
     def get_search_collection(self):
         return self.search
 
+    def record_words(self, words):
+        record = [{"search": word} for word in words]
+        # TODO: doesn't check for duplicates
+        self.search.insert(record)
+
     def record_search(self, search_string):
         record = {"search": search_string}
         if self.search.find(record).count() == 0:
             self.search.insert(record)
 
-    def _url_split(self, url):
-        # TODO: should move to filters
-        return url.split("//", 1)
-
     def record_url(self, url):
-        protocol, url = self._url_split(url)
+        protocol, url = remove_protocol(url)
         # Check https: http:
         urls = self.lists.find({"url": str(url)})
         if urls.count() == 0:
@@ -52,31 +56,30 @@ class MongoDBRecorder(object):
                 return True
         return False
 
-
     def record_db(self, data, url, title, language):
         # Update the database with url and data
         try:
-            protocol, url = self._url_split(url)
+            protocol, url = remove_protocol(url)
             data_list = {"data": data, "url": url, "title": title,
-             "time_scanned": datetime.now(), "lang":language,
-              "protocol":protocol}
+                         "time_scanned": datetime.now(), "lang": language,
+                         "protocol": protocol}
             list_result = self.lists.find({"url": url})
             if list_result.count() == 0:
                 self.lists.insert(data_list)
             else:
                 # Update the time this url was scanned
                 self.lists.update(
-                    {'_id':list_result[0]['_id']},
+                    {'_id': list_result[0]['_id']},
                     {
                         "$set": {
                             "data": data,
                             "urls": url,
                             "time_scanned": datetime.now(),
                             "title": title,
-                            "lang":language,
-                            "protocol":protocol
+                            "lang": language,
+                            "protocol": protocol
                         }
                     }, upsert=False)
         except Exception:
-            self.logger.debug(data_list)
+            # self.logger.debug(data_list)
             self.logger.exception('mongo_recorder::record_db')
