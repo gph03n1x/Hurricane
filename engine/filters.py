@@ -6,6 +6,7 @@ from urllib.parse import urlparse, urljoin
 def remove_protocol(url):
     return url.split("//", 1)
 
+
 def url_validator(url):
     try:
         result = urlparse(url)
@@ -31,6 +32,7 @@ def remove_backslash(url_path):
 def complete_domain(url_path, current_url):
     try:
         if not urlparse(url_path).netloc:
+            # TODO: removes https , it shouldn't do that
             current_domain = url_to_domain(current_url)
             url_path = urljoin(http_checker(current_domain), url_path)
     except IndexError:
