@@ -65,6 +65,12 @@ class SearchHandler(tornado.web.RequestHandler):
         return data
 
     def post(self):
+        """
+        Checks for the arguments search_string and nohtml and renders
+        the page main.html or response.html depending to the nohtml argument
+        sear
+        :return:
+        """
         matched_results, q_time = self.search(self.get_argument('search_string'))
 
         try:

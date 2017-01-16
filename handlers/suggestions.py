@@ -19,7 +19,6 @@ class SuggestionsHandler(tornado.web.RequestHandler):
         :return:
         """
         search_string = re.sub(re.compile(r'\s+'), " ", self.get_argument('search_string').lower())
-        # TODO: limit of suggestions results should be different from search
 
         response = [esc.xhtml_escape(match["search"]) for match in self.suggestions.find(
             {"$text": {"$search": search_string}}).limit(self.options['app']['suggestions-limit'])]
