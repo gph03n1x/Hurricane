@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import re
-import time
 # Third party libraries
 import tornado.web
-import tornado.escape as esc
 # Engine libraries
-from engine.nltk_wrappers import Description
+from engine.search import DefaultSearch
 
 
 class SearchHandler(tornado.web.RequestHandler):
@@ -25,7 +22,7 @@ class SearchHandler(tornado.web.RequestHandler):
         self.parser = parser
         self.options = options
         self.logger = logger
-        self.description = Description()
+        self.search = DefaultSearch(options, database, parser)
 
     def get(self):
         """
@@ -39,77 +36,22 @@ class SearchHandler(tornado.web.RequestHandler):
         except tornado.web.MissingArgumentError:
             self.render("main.html", results=[], search="", qTime="0")
         else:
-            matched_results, q_time = self.search(self.get_argument('search'))
+            matched_results, q_time = self.search.look_up(self.get_argument('search'))
             self.render("main.html", results=matched_results, search=self.get_argument('search'), qTime=q_time)
-
-    def __bold(self, word):
-        """
-        Takes a word escapes it and
-        adds strong tags around it
-        :param word:
-        :return: String
-        """
-        return "{0}{1}{2}".format("<strong>", esc.xhtml_escape(word), "</strong>")
-
-    def escape_and_bold(self, data, search_string):
-        """
-        Takes the description and bolds every word that
-        is part of the search_string.
-        :param data:
-        :param search_string:
-        :return: String
-        """
-        data = esc.xhtml_escape(data)
-        for word in search_string.split():
-            data = data.replace(word, self.__bold(word))
-        return data
 
     def post(self):
         """
-        Checks for the arguments search_string and nohtml and renders
+        Checks for the arguments search and nohtml and renders
         the page main.html or response.html depending to the nohtml argument
         sear
         :return:
         """
-        matched_results, q_time = self.search(self.get_argument('search_string'))
+        matched_results, q_time = self.search.look_up(self.get_argument('search'))
 
         try:
             # TODO: create an API handler
             self.get_argument('nohtml')
         except tornado.web.MissingArgumentError:
-            self.render("main.html", results=matched_results, search=self.get_argument('search_string'), qTime=q_time)
+            self.render("main.html", results=matched_results, search=self.get_argument('search'), qTime=q_time)
         else:
             self.render("response.html", results=matched_results, qTime=q_time)
-
-    def search(self, search_input):
-        """
-        Searches the database for data associated with the input
-        :param search_input:
-        :return:
-         List: [{"data": "...", "url": "...", },]
-         Float: q_time
-        """
-        search_string = self.parser.parse_input(search_input.lower())
-        search_string = re.sub(self.options['regexes']['split'], " ", search_string)
-        # TODO: optimize this a bit.
-
-        start = time.time()
-        matched_results = []
-        for match in self.database.lists.find({"$text": {"$search": search_string}}).limit(
-                self.options['app']['results-limit']):
-            res = self.description.fetch_description(match['data'], search_string,
-                                                     self.options['nltk']['left-margin'],
-                                                     self.options['nltk']['right-margin'],
-                                                     self.options['nltk']['concordance-results'])
-            match['data'] = self.escape_and_bold(res, search_string)
-            match['title'] = esc.xhtml_escape(match['title'])
-            match['title'] = re.sub(self.options['regexes']['title-clean'], "", match['title'])
-            match['url'] = "{0}{1}{2}".format(match['protocol'], "//", match["url"])
-
-            matched_results.append(match)
-
-        q_time = str(time.time() - start)
-        if len(matched_results) > 0:
-            self.database.record_search(search_input)
-
-        return matched_results, q_time

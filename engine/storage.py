@@ -36,8 +36,8 @@ class MongoDBRecorder(object):
         # TODO: doesn't check for duplicates
         self.search.insert(record)
 
-    def record_search(self, search_string):
-        record = {"search": search_string}
+    def record_search(self, search):
+        record = {"search": search}
         if self.search.find(record).count() == 0:
             self.search.insert(record)
 

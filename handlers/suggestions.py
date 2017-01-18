@@ -18,9 +18,9 @@ class SuggestionsHandler(tornado.web.RequestHandler):
         and returns a number of results
         :return:
         """
-        search_string = re.sub(re.compile(r'\s+'), " ", self.get_argument('search_string').lower())
+        search = re.sub(re.compile(r'\s+'), " ", self.get_argument('search').lower())
 
         response = [esc.xhtml_escape(match["search"]) for match in self.suggestions.find(
-            {"$text": {"$search": search_string}}).limit(self.options['app']['suggestions-limit'])]
+            {"$text": {"$search": search}}).limit(self.options['app']['suggestions-limit'])]
 
         self.write(json.dumps(response))

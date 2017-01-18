@@ -2,31 +2,42 @@
 # -*- coding: utf-8 -*-
 import re
 import time
+# Third party libraries
+import tornado.escape as esc
 # Engine libraries
 from engine.nltk_wrappers import Description
 
 class DefaultSearch:
-    def __init__(self, options, database):
+    def __init__(self, options, database, parser):
         self.options = options
         self.database = database
+        self.parser = parser
         self.description = Description()
 
 
 
-    def main_search(self, search):
+    def look_up(self, search):
+        """
+        Searches the database for data associated with the input
+        :param search_input:
+        :return:
+         List: [{"data": "...", "url": "...", },]
+         Float: q_time
+        """
         # TODO: complete this
-        search_string = re.sub(self.options['regexes']['split'], " ", search)
+        search = self.parser.parse_input(search.lower())
+        search = re.sub(self.options['regexes']['split'], " ", search)
         # TODO: optimize this a bit.
 
         start = time.time()
         matched_results = []
-        for match in self.database.lists.find({"$text": {"$search": search_string}}).limit(
+        for match in self.database.lists.find({"$text": {"$search": search}}).limit(
                 self.options['app']['results-limit']):
-            res = self.description.fetch_description(match['data'], search_string,
+            res = self.description.fetch_description(match['data'], search,
                                                      self.options['nltk']['left-margin'],
                                                      self.options['nltk']['right-margin'],
                                                      self.options['nltk']['concordance-results'])
-            match['data'] = self.escape_and_bold(res, search_string)
+            match['data'] = escape_and_bold(res, search)
             match['title'] = esc.xhtml_escape(match['title'])
             match['title'] = re.sub(self.options['regexes']['title-clean'], "", match['title'])
             match['url'] = "{0}{1}{2}".format(match['protocol'], "//", match["url"])
@@ -38,4 +49,27 @@ class DefaultSearch:
             self.database.record_search(search)
 
         return matched_results, q_time
-        pass
+
+
+def __bold(word):
+    """
+    Takes a word escapes it and
+    adds strong tags around it
+    :param word:
+    :return: String
+    """
+    return "{0}{1}{2}".format("<strong>", esc.xhtml_escape(word), "</strong>")
+
+
+def escape_and_bold(data, search):
+    """
+    Takes the description and bolds every word that
+    is part of the search.
+    :param data:
+    :param search:
+    :return: String
+    """
+    data = esc.xhtml_escape(data)
+    for word in search.split():
+        data = data.replace(word, __bold(word))
+    return data

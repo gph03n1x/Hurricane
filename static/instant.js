@@ -1,23 +1,23 @@
 var url = $(location).attr('href');
 
 
-var input = document.getElementById("search_string");
+var input = document.getElementById("search");
 var awesomplete = new Awesomplete(input);
 
 
-$( "#search_string" ).on('input', function() {
-    var search_input = $( "#search_string" ).val();
+$( "#search" ).on('input', function() {
+    var search_input = $( "#search" ).val();
     setTimeout(make_post, 800, search_input);
     console.log("Called");
-    $.post( "/suggest", { search_string: search_input}, function( data ) {
+    $.post( "/suggest", { search: search_input}, function( data ) {
         awesomplete.list = data;
     },'json');
 
 });
 
 function make_post( search_input ) {
-    if (search_input.length > 2 && search_input == $( "#search_string" ).val()) {
-        $.post( url, { search_string: search_input, nohtml: "true" }, function( data ) {
+    if (search_input.length > 2 && search_input == $( "#search" ).val()) {
+        $.post( url, { search: search_input, nohtml: "true" }, function( data ) {
             data = data.split("\n");
             $( "#qTime").empty();
             $( "#qTime").append(data[0]);

@@ -33,5 +33,5 @@ class StatusHandler(tornado.web.RequestHandler):
         Adds a website to the crawler queue
         :return:
         """
-        self.crawler.add_website(self.get_argument('search_string'))
+        self.crawler.add_website(self.get_argument('search'))
         self.redirect("/status")
