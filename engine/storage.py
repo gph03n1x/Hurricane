@@ -10,6 +10,11 @@ from engine.filters import remove_protocol
 
 class MongoDBRecorder(object):
     def __init__(self, logger, options):
+        """
+        Initializes the mongodb connection and exits in case of a database error
+        :param logger:
+        :param options:
+        """
         self.logger = logger
         self.options = options
 
@@ -26,22 +31,44 @@ class MongoDBRecorder(object):
             exit()
 
     def get_lists_collection(self):
+        """
+        Returns the lists collection
+        :return:
+        """
         return self.lists
 
     def get_search_collection(self):
+        """
+        Returns the search collection
+        :return:
+        """
         return self.search
 
     def record_words(self, words):
+        """
+        Records a list of words in the suggestion.
+        :return:
+        """
         record = [{"search": word} for word in words]
         # TODO: doesn't check for duplicates
         self.search.insert(record)
 
     def record_search(self, search):
+        """
+        Records a search input.
+        :param search:
+        :return:
+        """
         record = {"search": search}
         if self.search.find(record).count() == 0:
             self.search.insert(record)
 
-    def record_url(self, url):
+    def check_url(self, url):
+        """
+        Checks if a url is already crawled.
+        :param url:
+        :return:
+        """
         protocol, url = remove_protocol(url)
         # Check https: http:
         urls = self.lists.find({"url": str(url)})
@@ -57,7 +84,14 @@ class MongoDBRecorder(object):
         return False
 
     def record_db(self, data, url, title, language):
-        # Update the database with url and data
+        """
+        Records information about a crawled website at the db
+        :param data:
+        :param url:
+        :param title:
+        :param language:
+        :return:
+        """
         try:
             protocol, url = remove_protocol(url)
             data_list = {"data": data, "url": url, "title": title,

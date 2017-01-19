@@ -1,23 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import unittest
-from engine.filters import crop_fragment_identifier, remove_backslash, http_checker
-
+from engine.storage import MongoDBRecorder
 
 class TestStorage(unittest.TestCase):
     # TODO: add tests for the rest of the functions
     def setUp(self):
+        #self.storage = MongoDBRecorder()
         pass
 
-    def test_crop_fragment_identifier(self):
-        urls = {
-            "https://test.website.com#": "https://test.website.com",
-            "https://www.website.com#about": "https://www.website.com",
-            "https://www.website.com": "https://www.website.com"
-        }
-        for url in urls:
-            self.assertEqual(crop_fragment_identifier(url), urls[url])
+    def test_record_words(self):
+        pass
 
+    def test_check_url(self):
+        pass
+
+    def test_record_db(self):
+        pass
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestStorage)

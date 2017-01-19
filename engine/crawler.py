@@ -140,7 +140,7 @@ class Worker:
         if len(queue_item) > 2:
             await asyncio.sleep(queue_item[2])
         try:
-            if self.storage.record_url(self.current_url) and self.can_record():
+            if self.storage.check_url(self.current_url) and self.can_record():
                 self.logger.debug("Crawling: " + self.current_url)
                 try:
                     session = aiohttp.ClientSession(
@@ -197,7 +197,7 @@ class Worker:
                             # if url is invalid we can go on
                             continue
 
-                        if depth + 1 <= self.max_depth and self.storage.record_url(fixed_url):
+                        if depth + 1 <= self.max_depth and self.storage.check_url(fixed_url):
                             # If the url doesnt exceed depth
                             # and isn't already scanned
                             # Add the url to the queue and increase the depth
