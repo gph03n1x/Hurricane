@@ -20,5 +20,8 @@ class TestNltkWrappers(unittest.TestCase):
                                                    tests[test][3]), tests[test][4]
             )
 
+    def test_detect_language(self):
+        pass
+
 suite = unittest.TestLoader().loadTestsFromTestCase(TestNltkWrappers)
 unittest.TextTestRunner(verbosity=2).run(suite)

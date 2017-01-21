@@ -9,7 +9,6 @@ def validate_config():
 
 
 def fetch_options(cfg_file="hurricane.cfg"):
-    # TODO : cfg file should be defined from the main application
     options = {}
     config = configparser.RawConfigParser()
 

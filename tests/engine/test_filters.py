@@ -5,7 +5,6 @@ from engine.filters import *
 
 
 class TestFilters(unittest.TestCase):
-    # TODO: add tests for the rest of the functions
 
     def test_remove_protocol(self):
         urls = {
@@ -64,8 +63,8 @@ class TestFilters(unittest.TestCase):
         urls = {
             "https://www.youtube.com/watch?v=9d8SzG4FPyM": ["https://www.youtube.com/watch?v=9d8SzG4FPyM",
                                                             "http://randomweb.com"],
-            "http://github.com/gph03n1x": ["gph03n1x","https://github.com/"],
-            "http://google.com/test#about": ["test#about", "https://google.com"]
+            "https://github.com/gph03n1x": ["gph03n1x","https://github.com/"],
+            "https://google.com/test#about": ["test#about", "https://google.com"]
         }
         for url in urls:
             self.assertEqual(complete_domain(urls[url][0], urls[url][1]), url)

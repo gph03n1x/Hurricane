@@ -31,17 +31,19 @@ def remove_backslash(url_path):
 
 def complete_domain(url_path, current_url):
     try:
-        if not urlparse(url_path).netloc:
-            # TODO: removes https , it shouldn't do that
+        parsed_url = urlparse(url_path)
+        if not parsed_url.netloc:
+            protocol = remove_protocol(current_url)[0]
             current_domain = url_to_domain(current_url)
-            url_path = urljoin(http_checker(current_domain), url_path)
+            url_path = urljoin(http_checker(current_domain, scheme=protocol), url_path)
     except IndexError:
         pass
     return remove_backslash(url_path)
 
 
-def http_checker(url):
-    return urljoin("http://", url).replace("///", "//", 1)
+def http_checker(url, scheme="http:"):
+    scheme = "{0}{1}".format(scheme, "//")
+    return urljoin(scheme, url).replace("///", "//", 1)
 
 
 def url_to_domain(url_path):

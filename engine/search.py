@@ -24,25 +24,25 @@ class DefaultSearch:
          List: [{"data": "...", "url": "...", },]
          Float: q_time
         """
-        # TODO: complete this
         search = self.parser.parse_input(search.lower())
         search = re.sub(self.options['regexes']['split'], " ", search)
-        # TODO: optimize this a bit.
+
 
         start = time.time()
-        matched_results = []
-        for match in self.database.lists.find({"$text": {"$search": search}}).limit(
-                self.options['app']['results-limit']):
-            res = self.description.fetch_description(match['data'], search,
-                                                     self.options['nltk']['left-margin'],
-                                                     self.options['nltk']['right-margin'],
-                                                     self.options['nltk']['concordance-results'])
-            match['data'] = escape_and_bold(res, search)
-            match['title'] = esc.xhtml_escape(match['title'])
-            match['title'] = re.sub(self.options['regexes']['title-clean'], "", match['title'])
-            match['url'] = "{0}{1}{2}".format(match['protocol'], "//", match["url"])
+        matched_results = [{
+            'data': escape_and_bold(
+                self.description.fetch_description(match['data'], search, self.options['nltk']['left-margin'],
+                                                   self.options['nltk']['right-margin'],
+                                                   self.options['nltk']['concordance-results']),
+                search),
+            'title': re.sub(self.options['regexes']['title-clean'], "", esc.xhtml_escape(match['title'])),
+            'url': "{0}{1}{2}".format(match['protocol'], "//", match["url"]),
+            'protocol': match['protocol']
+                           }
 
-            matched_results.append(match)
+            for match in self.database.lists.find({"$text": {"$search": search}}).limit(
+                self.options['app']['results-limit'])
+                           ]
 
         q_time = str(time.time() - start)
         if len(matched_results) > 0:
