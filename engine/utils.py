@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import time
 import logging
 import zipfile
 import urllib.error
@@ -23,6 +24,7 @@ def gather_robots_txt(domain):
 
 
 def construct_logger(name):
+    # TODO: try to improve it ?
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     handler = logging.FileHandler(os.getcwd() + '/' + name + '.txt')
@@ -31,9 +33,8 @@ def construct_logger(name):
 
 
 def zip_old_logs(logs_folder):
-    # TODO: convert timestamp to a more readable form
     if os.path.exists(logs_folder+"/crawler.txt"):
-        ct = str(os.stat(logs_folder+"/crawler.txt").st_ctime)
+        ct = time.ctime(os.stat(logs_folder+"/crawler.txt").st_ctime).replace(" ", "-").replace(":", "-")
         with zipfile.ZipFile(logs_folder+"/"+ct+".zip", 'w') as myzip:
             myzip.write(logs_folder+"/crawler.txt")
             if os.path.exists(logs_folder+"/handlers.txt"):
