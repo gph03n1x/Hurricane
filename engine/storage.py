@@ -92,11 +92,13 @@ class MongoDBRecorder(object):
         :param language:
         :return:
         """
+        # TODO: record commit hash too.
         try:
             protocol, url = remove_protocol(url)
             data_list = {"data": data, "url": url, "title": title,
                          "time_scanned": datetime.now(), "lang": language,
                          "protocol": protocol}
+
             list_result = self.lists.find({"url": url})
             if list_result.count() == 0:
                 self.lists.insert(data_list)

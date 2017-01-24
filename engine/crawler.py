@@ -62,19 +62,21 @@ class Crawler(threading.Thread):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         tasks = []
-        self.threads[0] = Worker(self.options, self.logger,
+        self.threads[0] = Worker(self, 0, self.options, self.logger,
                                  self.queue, self.storage, self.parser, self.addToQueue, role=1)
         tasks.append(self.threads[0].begin())
         for thread in range(1, self.max_threads):
             # Spawn and start the threads
-            self.threads[thread] = Worker(self.options, self.logger,
+            self.threads[thread] = Worker(self, thread, self.options, self.logger,
                                           self.queue, self.storage, self.parser, self.addToQueue)
             tasks.append(self.threads[thread].begin())
         self.loop.run_until_complete(asyncio.gather(*tasks))
 
 
 class Worker:
-    def __init__(self, options, logger, queue, storage, parser, addtoq, role=0):
+    def __init__(self, crawler, id, options, logger, queue, storage, parser, addtoq, role=0):
+        self.id = id
+        self.crawler = crawler
         self.addToQ = addtoq
         self.options = options
         self.max_depth = self.options["crawler"]["depth"]
@@ -86,6 +88,9 @@ class Worker:
         self.robots = {}  # {"domain":[ robotparser, urls since last]}
         self.keep_pulling = True
         self.role = role
+
+    def getStatus(self):
+        pass
 
     def is_idle(self) -> bool:
         return self.current_url == "Idle"
@@ -115,8 +120,7 @@ class Worker:
     async def begin(self):
         while self.keep_pulling:
             try:
-                # TODO: need to check if the other workers
-                # are looking at the same url.
+
                 if self.role == 1 and len(self.addToQ) > 0:
                     pending_q = self.addToQ.pop()
                     await self.queue.put(pending_q)
@@ -136,6 +140,19 @@ class Worker:
         # queue_item[0] is the url, queue_item[1] is the depth
 
         self.current_url = queue_item[0]
+
+
+        for thread in self.crawler.threads:
+            # Checking if any other worker is already
+            # waiting for a response on the same url
+            if thread == self.id:
+                # Ignore the same worker.
+                continue
+            if self.crawler.threads[thread].current_url == queue_item[0]:
+                # Since one is already working then
+                # we return to exit the method
+                return
+
         depth = queue_item[1]
         if len(queue_item) > 2:
             await asyncio.sleep(queue_item[2])

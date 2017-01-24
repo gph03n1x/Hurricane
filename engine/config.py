@@ -4,6 +4,13 @@ import re
 import configparser
 
 
+def get_commit_hash():
+    master_file = open(".git/refs/heads/master", "r")
+    version = master_file.read().strip()
+    master_file.close()
+    return version
+
+
 def validate_config():
     pass
 

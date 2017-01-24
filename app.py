@@ -11,7 +11,7 @@ import tornado.ioloop
 import tornado.web
 # Engine libraries
 import engine.crawler as crawler
-from engine.config import fetch_options
+from engine.config import fetch_options, get_commit_hash
 from engine.parser import SearchParser
 from engine.utils import construct_logger, zip_old_logs
 # Handler libraries
@@ -21,6 +21,7 @@ from handlers.search import SearchHandler
 
 
 if __name__ == "__main__":
+    print("[*] Hurricane hash: " + get_commit_hash())
     parser = argparse.ArgumentParser()
     parser.add_argument("-u", "--update", help="update nltk collections", action="store_true")
     parser.add_argument("-t", "--tests", help="run the hurricane unittests", action="store_true")
