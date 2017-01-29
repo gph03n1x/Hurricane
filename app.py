@@ -34,9 +34,28 @@ if __name__ == "__main__":
         import tests
         sys.exit(0)
 
+    if args.config is not None:
+        OPTIONS = fetch_options(args.config)
+    else:
+        OPTIONS = fetch_options()
+
     if args.update:
         nltk.download("stopwords")
         nltk.download("punkt")
+        nltk.download("words")
+        from engine.storage import MongoDBRecorder
+        # TODO: merge all the logs in one file.
+        logger = construct_logger("data/logs/update")
+        storage = MongoDBRecorder(logger, OPTIONS)
+        # TODO: see if i can optimize this
+        from nltk.corpus import words, stopwords
+        print("[*] Creating dummy searches...")
+        dummy_search = list(set(words.words()) ^ set(stopwords.words('english')))
+        print("[*] Adding them in the database.")
+        for word in dummy_search:
+            storage.record_search(word)
+
+
         sys.exit(0)
 
     if not os.path.exists("data/logs"):
@@ -49,12 +68,11 @@ if __name__ == "__main__":
         sys.exit(0)
 
     zip_old_logs("data/logs")
-    if args.config is not None:
-        OPTIONS = fetch_options(args.config)
-    else:
-        OPTIONS = fetch_options()
+
 
     crawl = crawler.Crawler(OPTIONS)
+
+
 
     if args.spider is not None:
         print("[*] Starting the spider ...")
