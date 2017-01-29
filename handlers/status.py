@@ -20,6 +20,7 @@ class StatusHandler(tornado.web.RequestHandler):
         Fetches the websites that are being crawled at the moment.
         :return:
         """
+        # TODO: create web_ methods for crawler
         urls = [self.crawler.threads[thread].current_url for thread in self.crawler.threads]
         urls_robots = []
         for thread in self.crawler.threads:

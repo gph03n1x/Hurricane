@@ -6,6 +6,7 @@ import pymongo
 import pymongo.errors
 # Engine libraries
 from engine.filters import remove_protocol
+from engine.config import get_commit_hash
 
 
 class MongoDBRecorder(object):
@@ -17,6 +18,7 @@ class MongoDBRecorder(object):
         """
         self.logger = logger
         self.options = options
+        self.version_hash = get_commit_hash()
 
         try:
             self.client = pymongo.MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
@@ -25,6 +27,7 @@ class MongoDBRecorder(object):
             self.db = self.client[self.options['mongo']['database']]
             self.lists.create_index([("data", pymongo.TEXT)])
             self.search.create_index([("search", pymongo.TEXT)])
+
         except pymongo.errors.ConnectionFailure:
             print("[-] Database Error , exitting ...")
             self.logger.exception("mongo_recorder::__init__")
@@ -97,7 +100,7 @@ class MongoDBRecorder(object):
             protocol, url = remove_protocol(url)
             data_list = {"data": data, "url": url, "title": title,
                          "time_scanned": datetime.now(), "lang": language,
-                         "protocol": protocol}
+                         "protocol": protocol, 'hash_version': self.version_hash}
 
             list_result = self.lists.find({"url": url})
             if list_result.count() == 0:
@@ -107,14 +110,7 @@ class MongoDBRecorder(object):
                 self.lists.update(
                     {'_id': list_result[0]['_id']},
                     {
-                        "$set": {
-                            "data": data,
-                            "urls": url,
-                            "time_scanned": datetime.now(),
-                            "title": title,
-                            "lang": language,
-                            "protocol": protocol
-                        }
+                        "$set": data_list
                     }, upsert=False)
         except Exception:
             # self.logger.debug(data_list)
