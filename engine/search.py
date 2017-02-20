@@ -10,7 +10,7 @@ from engine.nltk_wrappers import Description
 class DefaultSearch:
     def __init__(self, options, database, parser):
         self.options = options
-        self.database = database
+        self.database = database.elastic_search
         self.parser = parser
         self.description = Description()
 
@@ -26,27 +26,29 @@ class DefaultSearch:
         """
         search = self.parser.parse_input(search.lower())
         search = re.sub(self.options['regexes']['split'], " ", search)
+        query = { "query": { "match": {"data": search } } }
 
 
         start = time.time()
+        results = self.database.search(index="web_page", doc_type="web_page", body=query)
+        #print(results['hits']['hits'][0])
         matched_results = [{
             'data': escape_and_bold(
-                self.description.fetch_description(match['data'], search, self.options['nltk']['left-margin'],
+                self.description.fetch_description(match['_source']['data'], search, self.options['nltk']['left-margin'],
                                                    self.options['nltk']['right-margin'],
                                                    self.options['nltk']['concordance-results']),
                 search),
-            'title': re.sub(self.options['regexes']['title-clean'], "", esc.xhtml_escape(match['title'])),
-            'url': "{0}{1}{2}".format(match['protocol'], "//", match["url"]),
-            'protocol': match['protocol']
+            'title': re.sub(self.options['regexes']['title-clean'], "", esc.xhtml_escape(match['_source']['title'])),
+            'url': "{0}{1}{2}".format(match['_source']['protocol'], "//", match['_source']["url"]),
+            'protocol': match['_source']['protocol']
                            }
 
-            for match in self.database.lists.find({"$text": {"$search": search}}).limit(
-                self.options['app']['results-limit'])
+            for match in results['hits']['hits']
                            ]
 
         q_time = str(time.time() - start)
-        if len(matched_results) > 0:
-            self.database.record_search(search)
+        #if len(matched_results) > 0:
+            #self.database.record_search(search)
 
         return matched_results, q_time
 

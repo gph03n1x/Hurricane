@@ -2,59 +2,41 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
 # Third party libraries
-import pymongo
-import pymongo.errors
+import elasticsearch
 # Engine libraries
 from engine.filters import remove_protocol
 from engine.config import get_commit_hash
 
 
-class MongoDBRecorder(object):
+class ElasticRecorder:
     def __init__(self, logger, options):
-        """
-        Initializes the mongodb connection and exits in case of a database error
-        :param logger:
-        :param options:
-        """
+        self.elastic_search = elasticsearch.Elasticsearch()
         self.logger = logger
         self.options = options
         self.version_hash = get_commit_hash()
-
-        try:
-            self.client = pymongo.MongoClient(self.options['mongo']['host'], int(self.options['mongo']['port']))
-            self.lists = self.client[self.options['mongo']['database']][self.options['mongo']['data-collection']]
-            self.search = self.client[self.options['mongo']['database']][self.options['mongo']['searches-collection']]
-            self.db = self.client[self.options['mongo']['database']]
-            self.lists.create_index([("data", pymongo.TEXT)])
-            self.search.create_index([("search", pymongo.TEXT)])
-
-        except pymongo.errors.ConnectionFailure:
-            print("[-] Database Error , exitting ...")
-            self.logger.exception("mongo_recorder::__init__")
-            exit()
+        self.elastic_search.indices.create(index='web_page', ignore=400)
 
     def get_lists_collection(self):
         """
         Returns the lists collection
         :return:
         """
-        return self.lists
+        # TODO: use lambdas here maybe ?
+        return self.elastic_search
 
     def get_search_collection(self):
         """
         Returns the search collection
         :return:
         """
-        return self.search
+        return self.elastic_search
 
     def record_words(self, words):
         """
         Records a list of words in the suggestion.
         :return:
         """
-        record = [{"search": word} for word in words]
-        # TODO: doesn't check for duplicates
-        self.search.insert(record)
+
 
     def record_search(self, search):
         """
@@ -62,9 +44,7 @@ class MongoDBRecorder(object):
         :param search:
         :return:
         """
-        record = {"search": search}
-        if self.search.find(record).count() == 0:
-            self.search.insert(record)
+
 
     def check_url(self, url):
         """
@@ -74,16 +54,24 @@ class MongoDBRecorder(object):
         """
         protocol, url = remove_protocol(url)
         # Check https: http:
-        urls = self.lists.find({"url": str(url)})
-        if urls.count() == 0:
+        duplicates = self.elastic_search.search(index="web_page", doc_type="web_page",
+                                                   body={
+                                                       "query": {
+                                                           "term": { "url": url}
+                                                       }
+                                                   })
+
+        if duplicates['hits']['total'] == 0:
             # If a url is not recorded, then we can crawl it
             return True
-        if urls.count() == 1:
+        if duplicates['hits']['total'] == 1:
+            return True
             # Count how much time passed since it was last scanned
-            time_passed = datetime.now() - urls[0]["time_scanned"]
+            time_passed = datetime.now() - duplicates['hits']['hits'][0]["time_scanned"]
             # passed since this url was last scanned
             if time_passed > timedelta(days=int(self.options['mongo']['old-urls'])):
                 return True
+
         return False
 
     def record_db(self, data, url, title, language):
@@ -95,23 +83,27 @@ class MongoDBRecorder(object):
         :param language:
         :return:
         """
-        # TODO: record commit hash too.
         try:
             protocol, url = remove_protocol(url)
             data_list = {"data": data, "url": url, "title": title,
                          "time_scanned": datetime.now(), "lang": language,
                          "protocol": protocol, 'hash_version': self.version_hash}
 
-            list_result = self.lists.find({"url": url})
-            if list_result.count() == 0:
-                self.lists.insert(data_list)
+            duplicates = self.elastic_search.search(index="web_page", doc_type="web_page",
+                                                       body={
+                                                           "query": {
+                                                               "term":  {"url": url}
+                                                           }
+                                                       })
+
+            if duplicates['hits']['total'] == 0:
+                res = self.elastic_search.index(index="web_page", doc_type='web_page', body=data_list)
             else:
                 # Update the time this url was scanned
-                self.lists.update(
-                    {'_id': list_result[0]['_id']},
-                    {
-                        "$set": data_list
-                    }, upsert=False)
+                # del data_list['url']
+                self.elastic_search.update(index="web_page", doc_type='web_page', id=duplicates['hits']['hits'][0]['_id'],
+                            body={"doc": data_list})
+
         except Exception:
             # self.logger.debug(data_list)
-            self.logger.exception('mongo_recorder::record_db')
+            self.logger.exception('ElasticRecorder::record_db')

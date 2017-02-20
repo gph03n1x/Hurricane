@@ -4,6 +4,7 @@ import re
 # Third party libraries
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
+import nltk
 # Engine libraries
 from engine.nltk_wrappers import detect_language
 
@@ -38,7 +39,9 @@ class PageParser(object):
             title = soup.title.text
 
         page = soup.get_text()
+
         page = re.sub(self.options['regexes']['split'], " ", page)
+        page = " ".join(nltk.wordpunct_tokenize(page))
         language = detect_language(page)
         return page, title, language
 

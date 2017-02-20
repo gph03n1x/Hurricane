@@ -43,17 +43,17 @@ if __name__ == "__main__":
         nltk.download("stopwords")
         nltk.download("punkt")
         nltk.download("words")
-        from engine.storage import MongoDBRecorder
+        from engine.storage import ElasticRecorder
         # TODO: merge all the logs in one file.
         logger = construct_logger("data/logs/update")
-        storage = MongoDBRecorder(logger, OPTIONS)
+        storage = ElasticRecorder(logger, OPTIONS)
         # TODO: see if i can optimize this
         from nltk.corpus import words, stopwords
-        print("[*] Creating dummy searches...")
-        dummy_search = list(set(words.words()) ^ set(stopwords.words('english')))
-        print("[*] Adding them in the database.")
-        for word in dummy_search:
-            storage.record_search(word)
+        #print("[*] Creating dummy searches...")
+        #dummy_search = list(set(words.words()) ^ set(stopwords.words('english')))
+        #print("[*] Adding them in the database.")
+        #for word in dummy_search:
+            #storage.record_search(word)
 
 
         sys.exit(0)

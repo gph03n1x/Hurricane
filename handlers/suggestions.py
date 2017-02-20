@@ -18,6 +18,7 @@ class SuggestionsHandler(tornado.web.RequestHandler):
         and returns a number of results
         :return:
         """
+        #TODO: fix that.
         search = re.sub(re.compile(r'\s+'), " ", self.get_argument('search').lower())
 
         response = [esc.xhtml_escape(match["search"]) for match in self.suggestions.find(

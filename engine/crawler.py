@@ -9,7 +9,7 @@ import aiohttp
 from engine.filters import *
 from engine.utils import gather_robots_txt
 from engine.parser import PageParser
-from engine.storage import MongoDBRecorder
+from engine.storage import ElasticRecorder
 from engine.utils import construct_logger
 
 
@@ -22,7 +22,7 @@ class Crawler(threading.Thread):
         self.options = options
         self.max_threads = self.options["crawler"]["threads"]
         self.logger = construct_logger("data/logs/crawler")
-        self.storage = MongoDBRecorder(self.logger, self.options)
+        self.storage = ElasticRecorder(self.logger, self.options)
         self.parser = PageParser(self.logger, self.options)
         self.loop = None
 
