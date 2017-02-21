@@ -40,7 +40,8 @@ class DefaultSearch:
                 search),
             'title': re.sub(self.options['regexes']['title-clean'], "", esc.xhtml_escape(match['_source']['title'])),
             'url': "{0}{1}{2}".format(match['_source']['protocol'], "//", match['_source']["url"]),
-            'protocol': match['_source']['protocol']
+            'protocol': match['_source']['protocol'],
+            'score': str(match['_score'])
                            }
 
             for match in results['hits']['hits']

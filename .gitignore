@@ -9,8 +9,12 @@ hurricane.cfg
 __pycache__/
 *.py[cod]
 
+
 # Batch files
 *.bat
+
+# Lnk files
+*.lnk
 
 # Mongo db
 data/db/
