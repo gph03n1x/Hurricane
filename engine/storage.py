@@ -15,6 +15,7 @@ class ElasticRecorder:
         self.options = options
         self.version_hash = get_commit_hash()
         self.elastic_search.indices.create(index='web_page', ignore=400)
+        self.elastic_search.indices.create(index='user_search', ignore=400)
 
     def get_lists_collection(self):
         """
@@ -22,7 +23,7 @@ class ElasticRecorder:
         :return:
         """
         # TODO: use lambdas here maybe ?
-        return self.elastic_search
+        return self
 
     def get_search_collection(self):
         """
@@ -44,6 +45,16 @@ class ElasticRecorder:
         :param search:
         :return:
         """
+        data_list = {'search': search}
+        duplicates = self.elastic_search.search(index="user_search", doc_type="user_search",
+                                                body={
+                                                    "query": {
+                                                        "term": {'search': search}
+                                                    }
+                                                })
+
+        if duplicates['hits']['total'] == 0:
+            res = self.elastic_search.index(index="user_search", doc_type="user_search", body=data_list)
 
 
     def check_url(self, url):

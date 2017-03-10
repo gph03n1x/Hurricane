@@ -18,10 +18,11 @@ class SuggestionsHandler(tornado.web.RequestHandler):
         and returns a number of results
         :return:
         """
-        #TODO: fix that.
         search = re.sub(re.compile(r'\s+'), " ", self.get_argument('search').lower())
+        query = {"query": {"match": {"search": search}}}
+        results = self.suggestions.search(index="user_search", doc_type="user_search", body=query)
 
-        response = [esc.xhtml_escape(match["search"]) for match in self.suggestions.find(
-            {"$text": {"$search": search}}).limit(self.options['app']['suggestions-limit'])]
+        response = [esc.xhtml_escape(match['_source']["search"])
+                    for match in results['hits']['hits']]
 
         self.write(json.dumps(response))

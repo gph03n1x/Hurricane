@@ -10,6 +10,7 @@ $( "#search" ).on('input', function() {
     setTimeout(make_post, 800, search_input);
     console.log("Called");
     $.post( "/suggest", { search: search_input}, function( data ) {
+        console.log(data);
         awesomplete.list = data;
     },'json');
 

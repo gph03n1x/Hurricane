@@ -11,6 +11,7 @@ class DefaultSearch:
     def __init__(self, options, database, parser):
         self.options = options
         self.database = database.elastic_search
+        self.recorder = database
         self.parser = parser
         self.description = Description()
 
@@ -25,6 +26,7 @@ class DefaultSearch:
          Float: q_time
         """
         search = self.parser.parse_input(search.lower())
+        # TODO: tokenize here.
         search = re.sub(self.options['regexes']['split'], " ", search)
         query = { "query": { "match": {"data": search } } }
 
@@ -48,8 +50,9 @@ class DefaultSearch:
                            ]
 
         q_time = str(time.time() - start)
-        #if len(matched_results) > 0:
-            #self.database.record_search(search)
+
+        if len(matched_results) > 0:
+            self.recorder.record_search(search)
 
         return matched_results, q_time
 
