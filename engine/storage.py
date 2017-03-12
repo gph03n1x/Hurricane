@@ -76,11 +76,13 @@ class ElasticRecorder:
             # If a url is not recorded, then we can crawl it
             return True
         if duplicates['hits']['total'] == 1:
-            return True
+            #return True
             # Count how much time passed since it was last scanned
-            time_passed = datetime.now() - duplicates['hits']['hits'][0]["time_scanned"]
-            # passed since this url was last scanned
-            if time_passed > timedelta(days=int(self.options['mongo']['old-urls'])):
+            time_passed = datetime.now() - duplicates['hits']['hits'][0]["_source"]["time_scanned"]
+            # Get the version hash
+            version = duplicates['hits']['hits'][0]["_source"]["hash_version"]
+
+            if time_passed > timedelta(days=int(self.options['mongo']['old-urls'])) or self.version_hash != version:
                 return True
 
         return False
